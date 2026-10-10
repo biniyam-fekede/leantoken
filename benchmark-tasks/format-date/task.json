@@ -1,0 +1,1 @@
+{ "prompt": "Implement `formatDate(date)` in src/format.js. Given a JavaScript Date, return it like `October 10, 2026` (full English month name, day without leading zero, four-digit year), using the date's UTC calendar day." }

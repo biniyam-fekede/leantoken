@@ -1,0 +1,1 @@
+{ "prompt": "Implement `isValidEmail(value)` in src/signup.js for a signup form. Accept ordinary addresses like `ada@example.com` and `first.last+tag@sub.example.co.uk`. Reject non-strings, empty strings, values with spaces, a missing `@`, a missing local part, or a domain without a dot." }

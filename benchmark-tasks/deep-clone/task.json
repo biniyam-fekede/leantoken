@@ -1,0 +1,1 @@
+{ "prompt": "Implement `cloneSettings(settings)` in src/settings.js. It must return a deep copy so that mutating the copy never affects the original. Settings can contain nested objects, arrays, Date objects, and Map objects, and these types must be preserved." }

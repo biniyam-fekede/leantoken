@@ -1,0 +1,11 @@
+{
+  "name": "leantoken",
+  "owner": { "name": "biniyam-fekede" },
+  "plugins": [
+    {
+      "name": "leantoken",
+      "source": "./",
+      "description": "Nudges Claude Code toward the simplest complete implementation."
+    }
+  ]
+}

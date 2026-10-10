@@ -1,0 +1,1 @@
+{ "prompt": "Implement `groupOrdersByStatus(orders)` in src/orders.js. Each order has a `status` string. Return an object mapping each status to the array of orders with that status, preserving input order." }

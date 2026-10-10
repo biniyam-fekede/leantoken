@@ -1,0 +1,6 @@
+{
+  "name": "leantoken",
+  "version": "0.1.0",
+  "description": "Nudges Claude Code toward the simplest complete implementation: reuse, built-ins, and platform features before new code or dependencies.",
+  "license": "MIT"
+}

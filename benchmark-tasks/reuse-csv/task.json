@@ -1,0 +1,1 @@
+{ "prompt": "Implement `loadUsers(text)` in src/users.js. It receives CSV text with a header row `name,email,age` and must return an array of `{ name, email, age }` objects where `age` is a number. Quoted fields may contain commas." }

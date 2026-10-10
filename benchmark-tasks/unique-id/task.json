@@ -1,0 +1,1 @@
+{ "prompt": "Implement `createId()` in src/id.js. It must return a random RFC 4122 version 4 UUID string, suitable for use as a database primary key." }

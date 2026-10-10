@@ -1,0 +1,30 @@
+{
+  "name": "leantoken",
+  "version": "0.1.0",
+  "description": "An optimization layer for AI coding agents that favors the simplest complete implementation, with a benchmark that measures whether it works.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "leantoken": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "rules",
+    "hooks",
+    ".claude-plugin",
+    "benchmark-tasks"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --dir tests",
+    "prepare": "tsc"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

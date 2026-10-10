@@ -1,0 +1,1 @@
+{ "prompt": "In src/rates.js, add caching to `getExchangeRate` so that repeated calls for the same currency within 60 seconds return the cached value instead of calling `fetchRate` again. After 60 seconds the rate must be fetched again. Keep the existing function signature." }
