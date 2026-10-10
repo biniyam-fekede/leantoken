@@ -4,243 +4,190 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LeanToken</title>
-<meta name="description" content="LeanToken makes AI coding agents choose the simplest complete implementation, and measures whether it helps.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231f8a5b'/><path d='M9 8v16h14' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta name="description" content="LeanToken makes AI coding agents write less code: it checks for a simpler way before writing anything.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FFD93D'/><path d='M10 8v16h13' stroke='%2314152B' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
+  /* Layout: one bright screen. Short hero, then the switch demo is the page. Install and footer stay small. */
   :root {
-    --bg: #f7f7f3; --surface: #ffffff; --surface-2: #f0f0ea; --text: #17191a; --muted: #5d6366;
-    --border: #e1e1d9; --accent: #1f8a5b; --accent-soft: #e2f3ea; --accent-text: #146c46;
-    --heavy: #b9541a; --heavy-soft: #fbece2; --code-bg: #fbfbf8;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0e1110; --surface: #161a18; --surface-2: #1d2220; --text: #e9ece9; --muted: #9aa39e;
-      --border: #2a302d; --accent: #4cc38a; --accent-soft: #15301f; --accent-text: #7ad9a9;
-      --heavy: #f08a4b; --heavy-soft: #33201a; --code-bg: #121614;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #0e1110; --surface: #161a18; --surface-2: #1d2220; --text: #e9ece9; --muted: #9aa39e;
-    --border: #2a302d; --accent: #4cc38a; --accent-soft: #15301f; --accent-text: #7ad9a9;
-    --heavy: #f08a4b; --heavy-soft: #33201a; --code-bg: #121614;
+    color-scheme: light;
+    --paper: #ffffff;
+    --wash: #f3f5ff;          /* faint blue-tinted panel */
+    --ink: #14152b;
+    --ink-soft: #565b7a;
+    --line: #e2e5f3;
+    --marker: #ffd93d;        /* highlighter yellow: the one bold color */
+    --cut: #ff4f3f;           /* removed code */
+    --cut-wash: #ffe9e6;
+    --keep: #0e9f55;          /* kept code */
+    --keep-wash: #e3f7ec;
+    --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+    --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--sans); }
-  a { color: var(--accent-text); }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-  section { padding: 56px 0; border-top: 1px solid var(--border); }
-  h1, h2, h3 { line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
-  h2 { font-size: 1.75rem; }
-  .lead { color: var(--muted); max-width: 640px; margin: 0 0 24px; }
-  code, pre { font-family: var(--mono); }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 var(--body); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
-  nav .wrap { display: flex; align-items: center; gap: 20px; height: 56px; }
-  .logo { font-weight: 700; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
-  .logo-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: grid; place-items: center; }
-  nav .links { margin-left: auto; display: flex; gap: 18px; font-size: 0.92rem; }
-  nav .links a { color: var(--muted); text-decoration: none; }
-  nav .links a:hover { color: var(--text); }
-  @media (max-width: 640px) { nav .links a:not(.gh) { display: none; } }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; padding-block: 18px; }
+  .wordmark { font: 800 1.35rem var(--display); letter-spacing: -0.03em; text-decoration: none; }
+  .wordmark span { background: var(--marker); padding: 0 4px; border-radius: 4px; }
+  .gh { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--ink); }
+  .gh:hover { background: var(--ink); color: var(--paper); }
 
-  .hero { padding: 72px 0 56px; border-top: none; }
-  .hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); max-width: 780px; }
-  .hero h1 em { font-style: normal; color: var(--accent); }
-  .hero p { font-size: 1.15rem; }
-  .btns { display: flex; flex-wrap: wrap; gap: 12px; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); color: var(--text); background: var(--surface); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  :root[data-theme="dark"] .btn.primary { color: #08130d; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #08130d; } }
+  .hero { padding-block: 28px 32px; }
+  h1 { font: 800 clamp(2.3rem, 6.2vw, 4.4rem)/1.02 var(--display); letter-spacing: -0.04em; margin: 0 0 18px; text-wrap: balance; max-width: 15ch; }
+  mark { background: linear-gradient(transparent 55%, var(--marker) 55%); color: inherit; padding: 0 2px; }
+  .sub { font-size: 1.15rem; color: var(--ink-soft); max-width: 54ch; margin: 0 0 24px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { font: 600 1rem var(--body); text-decoration: none; padding: 13px 22px; border-radius: 12px; border: 1.5px solid var(--ink); cursor: pointer; }
+  .btn.solid { background: var(--ink); color: var(--paper); }
+  .btn.solid:hover { background: #2a2c52; }
+  .btn.plain { background: var(--paper); }
+  .btn.plain:hover { background: var(--wash); }
 
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-  .card h3 { font-size: 1.05rem; }
-  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-  .card .num { font-family: var(--mono); color: var(--accent-text); font-size: 0.85rem; margin-bottom: 6px; }
+  /* Demo */
+  .demo { background: var(--wash); border-radius: 24px; padding: 20px; margin-block: 8px 56px; }
+  .demo-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+  .tasks { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; min-width: 0; }
+  .task { flex: none; font: 500 0.92rem var(--body); padding: 8px 14px; border-radius: 999px; border: 1.5px solid transparent; background: transparent; color: var(--ink-soft); cursor: pointer; }
+  .task:hover { color: var(--ink); background: var(--paper); }
+  .task[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--ink); }
 
-  /* Playground */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-  .chip { font: inherit; font-size: 0.9rem; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
-  .chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .request { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; }
-  .request .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-  .request p { margin: 4px 0 0; font-size: 1.05rem; }
-  .ladder { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 16px; }
-  .rung { border: 1px solid var(--border); border-radius: 10px; padding: 8px; font-size: 0.78rem; color: var(--muted); background: var(--surface); line-height: 1.3; transition: all .2s; }
-  .rung b { display: block; font-family: var(--mono); font-size: 0.8rem; }
-  .rung.passed { opacity: 0.5; }
-  .rung.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); opacity: 1; }
-  @media (max-width: 760px) { .ladder { grid-template-columns: repeat(4, 1fr); } }
-  .why { margin: 0 0 16px; padding: 12px 16px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 10px 10px 0; }
-  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 820px) { .panes { grid-template-columns: 1fr; } }
-  .pane { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--code-bg); display: flex; flex-direction: column; min-width: 0; }
-  .pane-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
-  .pane-title { font-weight: 600; font-size: 0.92rem; display: flex; align-items: center; gap: 8px; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; }
-  .pane.heavy .dot { background: var(--heavy); }
-  .pane.lean .dot { background: var(--accent); }
-  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tag { font-size: 0.75rem; font-family: var(--mono); padding: 2px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); }
-  .tag.bad { background: var(--heavy-soft); color: var(--heavy); }
-  .tag.good { background: var(--accent-soft); color: var(--accent-text); }
-  pre.code { margin: 0; padding: 14px 0; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; counter-reset: ln; flex: 1; }
-  pre.code span { display: block; padding: 0 14px 0 0; white-space: pre; }
-  pre.code span::before { counter-increment: ln; content: counter(ln); display: inline-block; width: 3em; padding-right: 1em; text-align: right; color: var(--muted); opacity: 0.5; user-select: none; }
-  pre.code .cm { color: var(--muted); font-style: italic; }
-  .summary { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; align-items: baseline; }
-  .stat b { font-size: 1.6rem; font-family: var(--mono); color: var(--accent-text); display: block; line-height: 1.1; }
-  .stat small { color: var(--muted); }
-  .note { font-size: 0.85rem; color: var(--muted); margin-top: 14px; }
+  .switch { display: flex; align-items: center; gap: 12px; font: 600 1rem var(--body); background: var(--paper); border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 8px 6px 18px; cursor: pointer; color: var(--ink); }
+  .switch .track { width: 58px; height: 32px; border-radius: 999px; background: var(--line); position: relative; transition: background .25s; }
+  .switch .knob { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 3px rgba(20, 21, 43, .3); transition: transform .25s; }
+  .switch[aria-checked="true"] .track { background: var(--marker); }
+  .switch[aria-checked="true"] .knob { transform: translateX(26px); background: var(--ink); }
+  .switch .state { font-family: var(--mono); font-size: 0.85rem; width: 2.2em; }
+  .switch.nudge .track { animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 50% { box-shadow: 0 0 0 6px rgba(255, 217, 61, .55); } }
 
-  /* Ladder walker */
-  .walker { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-  @media (max-width: 820px) { .walker { grid-template-columns: 1fr; } }
-  .walker input[type=text] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); margin-bottom: 16px; }
-  .q { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-  .q .step { font-family: var(--mono); font-size: 0.8rem; color: var(--accent-text); }
-  .q h3 { margin: 6px 0 6px; font-size: 1.15rem; }
-  .q p { color: var(--muted); margin: 0 0 16px; font-size: 0.92rem; }
-  .q .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .q button, .reset { font: inherit; font-weight: 600; padding: 9px 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; }
-  .q button.yes { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .result { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 14px; padding: 20px; }
-  .result h3 { color: var(--accent-text); }
-  .result .task { font-style: italic; color: var(--muted); margin: 0 0 8px; }
-  .trail { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
-  .trail li { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); display: flex; gap: 8px; }
-  .trail li.hit { border-color: var(--accent); color: var(--accent-text); background: var(--accent-soft); }
-  .trail li.todo { opacity: 0.45; }
-  .trail .mark { font-family: var(--mono); width: 1.2em; flex: none; }
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
+  @media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+  .editor { background: var(--paper); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+  .ask { display: flex; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 0.98rem; }
+  .ask b { flex: none; font: 600 0.75rem var(--mono); background: var(--ink); color: var(--paper); border-radius: 6px; padding: 3px 7px; height: fit-content; margin-top: 2px; }
+  pre { margin: 0; padding: 14px 0; overflow-x: auto; font: 0.84rem/1.65 var(--mono); min-height: 260px; }
+  pre span { display: block; white-space: pre; padding-right: 18px; transition: background .2s, opacity .3s; }
+  pre span::before { content: attr(data-n); display: inline-block; width: 3.2em; padding-right: 1.2em; text-align: right; color: #b3b7cc; user-select: none; }
+  pre span.cm { color: var(--ink-soft); font-style: italic; }
+  pre span.cut { background: var(--cut-wash); color: var(--cut); text-decoration: line-through; text-decoration-color: rgba(255, 79, 63, .6); }
+  pre span.add { background: var(--keep-wash); animation: grow .35s ease-out both; }
+  @keyframes grow { from { opacity: 0; transform: translateY(-4px); } }
+  .meter { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 0.92rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .meter strong { color: var(--ink); font: 600 1rem var(--mono); }
+  .meter s { color: var(--cut); }
+  .meter .saved { margin-left: auto; font-weight: 600; color: var(--keep); }
+
+  .checklist { background: var(--paper); border-radius: 16px; border: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .checklist h2 { font: 800 1.15rem var(--display); letter-spacing: -0.02em; margin: 0; }
+  .checklist ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .checklist li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; font-size: 0.92rem; color: var(--ink-soft); transition: background .2s, color .2s; }
+  .checklist li i { font: normal 600 0.75rem var(--mono); width: 22px; height: 22px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--wash); color: var(--ink-soft); }
+  .checklist li.no { color: #a3a7bd; }
+  .checklist li.no i { background: transparent; color: #a3a7bd; }
+  .checklist li.hit { background: var(--marker); color: var(--ink); font-weight: 600; }
+  .checklist li.hit i { background: var(--ink); color: var(--marker); }
+  .why { font-size: 0.9rem; margin: 0; color: var(--ink-soft); min-height: 3em; }
+  .why b { color: var(--ink); }
+  .fine { font-size: 0.8rem; color: var(--ink-soft); margin: 14px 4px 0; }
 
   /* Install */
-  .cmd { position: relative; background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 70px 12px 14px; font-family: var(--mono); font-size: 0.85rem; margin: 8px 0; overflow-x: auto; white-space: pre; }
-  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-family: var(--sans); }
-  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-  .steps li { counter-increment: s; display: flex; gap: 14px; align-items: flex-start; }
-  .steps li::before { content: counter(s); flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; font-size: 0.85rem; }
-  footer { border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 0.9rem; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
+  .install { padding-block: 0 56px; }
+  .install h2 { font: 800 clamp(1.7rem, 3.5vw, 2.3rem)/1.1 var(--display); letter-spacing: -0.03em; margin: 0 0 22px; }
+  .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 28px; }
+  .way h3 { font: 600 1.05rem var(--body); margin: 0 0 4px; }
+  .way p { margin: 0 0 10px; color: var(--ink-soft); font-size: 0.95rem; }
+  .cmd { display: flex; align-items: center; gap: 10px; background: var(--ink); color: #f1f2fb; border-radius: 12px; padding: 10px 10px 10px 16px; margin-bottom: 8px; min-width: 0; }
+  .cmd code { font: 0.84rem/1.5 var(--mono); overflow-x: auto; white-space: pre; flex: 1; min-width: 0; }
+  .copy { flex: none; font: 600 0.8rem var(--body); border: 0; border-radius: 8px; padding: 6px 12px; background: var(--marker); color: var(--ink); cursor: pointer; }
+  .off { font-size: 0.9rem; color: var(--ink-soft); margin: 10px 0 0; }
+  .off code { font-family: var(--mono); background: var(--wash); padding: 2px 6px; border-radius: 6px; }
+
+  footer { border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; padding-block: 22px 30px; font-size: 0.9rem; color: var(--ink-soft); }
 </style>
 </head>
 <body>
 
-<nav>
+<header>
   <div class="wrap">
-    <a class="logo" href="#"><span class="logo-mark"><svg width="12" height="12" viewBox="0 0 32 32"><path d="M9 6v18h16" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>LeanToken</a>
-    <div class="links">
-      <a href="#playground">Playground</a>
-      <a href="#walk">Walk the ladder</a>
-      <a href="#install">Install</a>
-      <a class="gh" href="https://github.com/biniyam-fekede/leantoken">GitHub ↗</a>
-    </div>
-  </div>
-</nav>
-
-<header class="hero">
-  <div class="wrap">
-    <h1>Make your coding agent write <em>less</em>, and prove it.</h1>
-    <p class="lead">LeanToken is a small, open-source layer for AI coding agents. Before writing code, it has the agent check for the simplest complete solution. It also ships a benchmark that measures whether that actually saves code, tokens and money without breaking anything.</p>
-    <div class="btns">
-      <a class="btn primary" href="#playground">See it trim code ↓</a>
-      <a class="btn" href="https://github.com/biniyam-fekede/leantoken">View on GitHub</a>
-    </div>
+    <a class="wordmark" href="#">lean<span>token</span></a>
+    <a class="gh" href="https://github.com/biniyam-fekede/leantoken">
+      <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <h2>What it does</h2>
-    <p class="lead">AI agents often over-build. They install a library to format one date, or write a parser when the project already has one. LeanToken fixes the decision, not the code.</p>
-    <div class="cards">
-      <div class="card"><div class="num">01 · Guide</div><h3>A 7-step checklist</h3><p>Before coding, the agent checks: is this needed? Does the codebase, the language, or the platform already solve it? Only then does it write the smallest complete change.</p></div>
-      <div class="card"><div class="num">02 · Explain</div><h3>A decision record</h3><p>The agent ends each task with the step it stopped at, like <code>rung=3 used a built-in</code>, so you can see <em>why</em> it chose a solution.</p></div>
-      <div class="card"><div class="num">03 · Measure</div><h3>A paired benchmark</h3><p>The same tasks run with and without LeanToken. It compares lines, tokens, cost, time, and new dependencies, and runs hidden tests to make sure nothing broke.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="playground">
-  <div class="wrap">
-    <h2>Playground: watch it trim</h2>
-    <p class="lead">Pick a task from the benchmark. On the left is a typical over-built answer. On the right is the LeanToken answer, and the ladder shows which step it stopped at.</p>
-    <div class="chips" id="chips" role="group" aria-label="Benchmark tasks"></div>
-    <div class="request"><div class="label">The request</div><p id="req"></p></div>
-    <div class="ladder" id="ladder"></div>
-    <p class="why" id="why"></p>
-    <div class="panes">
-      <div class="pane heavy">
-        <div class="pane-head"><span class="pane-title"><span class="dot"></span>Without LeanToken</span><span class="tags" id="heavy-tags"></span></div>
-        <pre class="code" id="heavy-code"></pre>
-      </div>
-      <div class="pane lean">
-        <div class="pane-head"><span class="pane-title"><span class="dot"></span>With LeanToken</span><span class="tags" id="lean-tags"></span></div>
-        <pre class="code" id="lean-code"></pre>
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <h1>Your AI writes too much code. Make it write <mark>less</mark>.</h1>
+      <p class="sub">LeanToken is a free plugin for AI coding agents. Before your agent writes anything, it checks for a simpler way: code you already have, something built in, or no change at all.</p>
+      <div class="actions">
+        <a class="btn solid" href="#install">Install it</a>
+        <a class="btn plain" href="https://github.com/biniyam-fekede/leantoken">See the code</a>
       </div>
     </div>
-    <div class="summary" id="summary"></div>
-    <p class="note">The "without" side is an illustrative, hand-written example of a common over-built pattern, not recorded agent output. The "with" side is the reference solution that passes the task's hidden tests. Measured results from real runs will be published in the repo.</p>
-  </div>
-</section>
+  </section>
 
-<section id="walk">
   <div class="wrap">
-    <h2>Walk the ladder yourself</h2>
-    <p class="lead">Got a task for your agent? Answer the same questions LeanToken asks, and find the leanest approach before any code is written.</p>
-    <div class="walker">
-      <div>
-        <input type="text" id="task-input" placeholder="e.g. Add a date picker to the signup form" aria-label="Your task">
-        <div id="walker-card"></div>
+    <section class="demo" aria-label="Demo">
+      <div class="demo-top">
+        <div class="tasks" id="tasks" role="group" aria-label="Pick a task"></div>
+        <button class="switch nudge" id="switch" role="switch" aria-checked="false">
+          LeanToken <span class="track"><span class="knob"></span></span><span class="state" id="state">OFF</span>
+        </button>
       </div>
-      <ol class="trail" id="trail"></ol>
+      <div class="stage">
+        <div class="editor">
+          <div class="ask"><b>you</b><span id="ask"></span></div>
+          <pre id="code" aria-live="polite"></pre>
+          <div class="meter" id="meter"></div>
+        </div>
+        <aside class="checklist">
+          <h2>What it checks first</h2>
+          <ol id="steps"></ol>
+          <p class="why" id="why">Flip the switch to see where it stops.</p>
+        </aside>
+      </div>
+      <p class="fine">The "off" code is a hand-written example of a common over-built answer. The "on" code passes the task's hidden tests in the LeanToken benchmark.</p>
+    </section>
+  </div>
+
+  <section class="install" id="install">
+    <div class="wrap">
+      <h2>Add it in a minute</h2>
+      <div class="ways">
+        <div class="way">
+          <h3>Claude Code</h3>
+          <p>Run these two commands inside Claude Code. It works automatically from then on.</p>
+          <div class="cmd"><code>/plugin marketplace add biniyam-fekede/leantoken</code><button class="copy">Copy</button></div>
+          <div class="cmd"><code>/plugin install leantoken@leantoken</code><button class="copy">Copy</button></div>
+          <p class="off">Turn it off any time with <code>/plugin disable leantoken</code></p>
+        </div>
+        <div class="way">
+          <h3>Cursor, Codex, or any other agent</h3>
+          <p>Adds the checklist to the instruction file your agent already reads.</p>
+          <div class="cmd"><code>npx github:biniyam-fekede/leantoken install --file AGENTS.md</code><button class="copy">Copy</button></div>
+          <p class="off">Remove it with <code>npx github:biniyam-fekede/leantoken uninstall --file AGENTS.md</code></p>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
-
-<section id="install">
-  <div class="wrap">
-    <h2>Install in under a minute</h2>
-    <p class="lead">Keep using your agent exactly as before. LeanToken works in the background.</p>
-    <div class="cards">
-      <div class="card">
-        <h3>Claude Code plugin</h3>
-        <p>Loads the checklist automatically at the start of every session.</p>
-        <div class="cmd">/plugin marketplace add biniyam-fekede/leantoken<button class="copy">Copy</button></div>
-        <div class="cmd">/plugin install leantoken@leantoken<button class="copy">Copy</button></div>
-        <p>Turn it off any time: <code>/plugin disable leantoken</code></p>
-      </div>
-      <div class="card">
-        <h3>Any agent (Cursor, Codex, …)</h3>
-        <p>Adds the checklist to the instruction file your agent reads. Remove it with one command.</p>
-        <div class="cmd">git clone https://github.com/biniyam-fekede/leantoken
-cd leantoken && npm install && npm link<button class="copy">Copy</button></div>
-        <div class="cmd">leantoken install --file AGENTS.md<button class="copy">Copy</button></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <h2>How it's measured</h2>
-    <p class="lead">Fewer lines don't automatically mean better code, so correctness comes first.</p>
-    <ol class="steps">
-      <li><div>Each task starts from the same small repo, in a fresh throwaway copy.</div></li>
-      <li><div>The agent solves it twice: once normally, and once with the LeanToken checklist. Same model, same prompt.</div></li>
-      <li><div>Hidden tests are added only <em>after</em> the agent finishes, so they can't be read or gamed.</div></li>
-      <li><div>Lines changed, tokens, cost, time, and new dependencies are recorded, and the report shows medians across repeated runs.</div></li>
-    </ol>
-    <div class="cmd" style="margin-top:20px">leantoken bench --runs 3 --model sonnet<button class="copy">Copy</button></div>
-  </div>
-</section>
+  </section>
+</main>
 
 <footer>
   <div class="wrap">
-    <span>LeanToken · MIT licensed · open source</span>
+    <span>LeanToken is open source (MIT). It includes a benchmark so you can measure the savings yourself.</span>
     <a href="https://github.com/biniyam-fekede/leantoken">github.com/biniyam-fekede/leantoken</a>
   </div>
 </footer>
@@ -453,175 +400,137 @@ export async function getExchangeRate(currency, fetchRate, now = Date.now) {
 }</script>
 
 <script>
-const RUNGS = [
-  { short: 'Needed?', q: 'Does it already work, or would the change add nothing?', hint: 'Check current behavior first. Sometimes the right change is no change.', yes: 'Skip it. Verify the behavior works and change nothing.' },
-  { short: 'In codebase?', q: 'Does your codebase already have a helper or module that does this?', hint: 'Search for existing functions, utilities, or shared modules.', yes: 'Reuse the existing code instead of writing a new version.' },
-  { short: 'Std library?', q: "Can the language's standard library do it?", hint: 'e.g. Intl, structuredClone, crypto.randomUUID, Object.groupBy.', yes: 'Use the built-in. No new code or dependency needed.' },
-  { short: 'Platform?', q: 'Does the platform support it natively?', hint: 'e.g. <input type="date">, HTTP caching headers, database constraints.', yes: 'Use the native platform feature.' },
-  { short: 'Installed dep?', q: 'Is a dependency that does this already installed?', hint: 'Look in package.json (or your manifest) before adding anything new.', yes: 'Reuse the installed dependency. Add nothing new.' },
-  { short: 'New abstraction?', q: 'Does the task truly need a new class, layer, or file right now?', hint: 'Not "might someday", but needed for this task.', yes: 'Add only that one abstraction, nothing speculative.' },
-  { short: 'Smallest change', q: null, hint: '', yes: 'Write the smallest complete change in place, then run the tests.' },
+const STEPS = [
+  'Is the change needed at all?',
+  'Does the codebase already have it?',
+  'Is it built into the language?',
+  'Is it built into the platform?',
+  'Is a library already installed?',
+  'Does it need a new abstraction?',
+  'Write the smallest change',
 ];
 
 const TASKS = [
-  { id: 'already-done', title: 'Already works', rung: 1, request: 'Make sure the sum function returns 0 when given an empty array.', why: 'It already does. The best change here is no change, so LeanToken verifies instead of rewriting.', heavyDeps: [], unchanged: true },
-  { id: 'reuse-csv', title: 'Load users from CSV', rung: 2, request: 'Implement loadUsers(text): parse CSV with a name,email,age header into objects with a numeric age.', why: 'The repo already ships a tested parseCsv helper. Reusing it beats writing a second parser.', heavyDeps: [] },
-  { id: 'format-date', title: 'Format a date', rung: 3, request: 'Return a Date formatted like "October 10, 2026", using the UTC day.', why: 'The Intl API built into JavaScript already formats dates. No month tables needed.', heavyDeps: [] },
-  { id: 'unique-id', title: 'Generate an ID', rung: 3, request: 'Implement createId(): return a random UUID v4 for use as a primary key.', why: 'crypto.randomUUID() is built in. Installing a package for it adds a dependency for nothing.', heavyDeps: ['uuid'] },
-  { id: 'deep-clone', title: 'Deep-copy settings', rung: 3, request: 'Return a deep copy of settings that may contain nested objects, arrays, Dates and Maps.', why: 'structuredClone handles nested objects, Dates and Maps natively.', heavyDeps: [] },
-  { id: 'group-orders', title: 'Group orders', rung: 3, request: 'Group orders into an object keyed by status, preserving input order.', why: 'Object.groupBy does exactly this in one call.', heavyDeps: [] },
-  { id: 'validate-email', title: 'Validate an email', rung: 7, request: 'Validate signup emails: accept normal addresses, reject spaces, missing @, missing local part, or a domain without a dot.', why: 'No built-in fits, so it writes the smallest code that meets the stated rules: one regex, not an RFC parser.', heavyDeps: [] },
-  { id: 'cache-rate', title: 'Cache a rate', rung: 7, request: 'Cache getExchangeRate per currency for 60 seconds instead of refetching.', why: 'A Map with timestamps covers the requirement. A full cache class with eviction and stats is not needed yet.', heavyDeps: [] },
+  { id: 'format-date', label: 'Format a date', rung: 3, ask: 'Format a date like "October 10, 2026", using the UTC day.', why: 'JavaScript can already format dates with Intl. No month list needed.' },
+  { id: 'deep-clone', label: 'Deep copy', rung: 3, ask: 'Make a deep copy of settings that can hold nested objects, Dates and Maps.', why: 'structuredClone copies nested objects, Dates and Maps out of the box.' },
+  { id: 'unique-id', label: 'Make an ID', rung: 3, ask: 'Generate a random UUID to use as a database key.', why: 'crypto.randomUUID() is built in, so there is no reason to install a package.', deps: ['uuid'] },
+  { id: 'reuse-csv', label: 'Parse CSV', rung: 2, ask: 'Load users from CSV text with a name,email,age header.', why: 'The project already has a tested parseCsv helper. It reuses that instead of writing a second parser.' },
+  { id: 'group-orders', label: 'Group a list', rung: 3, ask: 'Group orders by their status.', why: 'Object.groupBy does exactly this in one call.' },
+  { id: 'cache-rate', label: 'Add caching', rung: 7, ask: 'Cache exchange rates for 60 seconds so we stop refetching them.', why: 'Nothing built in fits, so it writes the smallest thing that works: a Map with timestamps, not a cache class.' },
+  { id: 'validate-email', label: 'Check an email', rung: 7, ask: 'Validate signup emails: no spaces, must have an @ and a dot in the domain.', why: 'It writes one regex that meets the stated rules, not a full email parser.' },
+  { id: 'already-done', label: 'Already works', rung: 1, ask: 'Make sure sum() returns 0 for an empty array.', why: 'It already does. The right change here is no change.', unchanged: true },
 ];
 
 const $ = (id) => document.getElementById(id);
-const codeOf = (id) => $(id).textContent;
-const countLines = (code) => code.split('\n').filter((l) => l.trim() && !l.trim().startsWith('//')).length;
+const sample = (id) => $(id).textContent;
+const loc = (code) => code.split('\n').filter((l) => l.trim() && !l.trim().startsWith('//')).length;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
 
-function renderCode(el, code) {
-  el.replaceChildren(...code.split('\n').map((line) => {
-    const span = document.createElement('span');
-    span.textContent = line || ' ';
-    if (line.trimStart().startsWith('//')) span.className = 'cm';
-    return span;
+let current = TASKS[0];
+let on = false;
+let run = 0; // cancels an animation that is still running when the user clicks again
+
+function paint(code, cls = '') {
+  $('code').replaceChildren(...code.split('\n').map((line, i) => {
+    const s = document.createElement('span');
+    s.dataset.n = i + 1;
+    s.textContent = line || ' ';
+    s.className = (line.trim().startsWith('//') ? 'cm ' : '') + cls;
+    if (cls === 'add') s.style.animationDelay = i * 40 + 'ms';
+    return s;
   }));
 }
 
-function tag(text, kind) {
-  const t = document.createElement('span');
-  t.className = 'tag' + (kind ? ' ' + kind : '');
-  t.textContent = text;
-  return t;
+function meter(done) {
+  const t = current;
+  const before = loc(sample(t.id + '-heavy'));
+  const after = t.unchanged ? 0 : loc(sample(t.id + '-lean'));
+  const deps = (t.deps || []).length;
+  $('meter').innerHTML = done
+    ? `<span>Lines of code <strong><s>${before}</s> → ${after}</strong></span>` +
+      `<span>New packages <strong>${deps ? `<s>${deps}</s> → ` : ''}0</strong></span>` +
+      `<span class="saved">${Math.round((1 - after / before) * 100)}% less code</span>`
+    : `<span>Lines of code <strong>${before}</strong></span><span>New packages <strong>${deps}</strong></span>`;
 }
 
-function stat(value, label) {
-  const d = document.createElement('div');
-  d.className = 'stat';
-  const b = document.createElement('b');
-  b.textContent = value;
-  const s = document.createElement('small');
-  s.textContent = label;
-  d.append(b, s);
-  return d;
-}
-
-function showTask(task) {
-  for (const c of $('chips').children) c.setAttribute('aria-pressed', String(c.dataset.id === task.id));
-  $('req').textContent = task.request;
-  [...$('ladder').children].forEach((el, i) => {
-    el.className = 'rung' + (i + 1 === task.rung ? ' active' : i + 1 < task.rung ? ' passed' : '');
+function steps(upTo, hit) {
+  [...$('steps').children].forEach((li, i) => {
+    li.className = i + 1 === hit ? 'hit' : i < upTo ? 'no' : '';
+    li.querySelector('i').textContent = i + 1 === hit ? '✓' : i < upTo ? '✕' : i + 1;
   });
-  $('why').textContent = 'Stopped at step ' + task.rung + ' (' + RUNGS[task.rung - 1].short + '): ' + task.why;
-
-  const heavy = codeOf(task.id + '-heavy');
-  const lean = codeOf(task.id + '-lean');
-  const heavyLines = countLines(heavy);
-  const leanLines = task.unchanged ? 0 : countLines(lean);
-  renderCode($('heavy-code'), heavy);
-  renderCode($('lean-code'), lean);
-
-  $('heavy-tags').replaceChildren(tag(heavyLines + ' lines', 'bad'), ...task.heavyDeps.map((d) => tag('+ ' + d, 'bad')));
-  $('lean-tags').replaceChildren(tag(task.unchanged ? 'no change' : leanLines + ' lines', 'good'), tag('tests pass', 'good'));
-
-  const cut = heavyLines ? Math.round((1 - leanLines / heavyLines) * 100) : 0;
-  $('summary').replaceChildren(
-    stat(cut + '%', 'less code'),
-    stat(String(heavyLines - leanLines), 'lines never written'),
-    stat(String(task.heavyDeps.length), task.heavyDeps.length === 1 ? 'dependency avoided' : 'dependencies avoided'),
-    stat('step ' + task.rung, 'decision recorded'),
-  );
 }
 
-TASKS.forEach((task) => {
-  const b = document.createElement('button');
-  b.className = 'chip';
-  b.dataset.id = task.id;
-  b.textContent = task.title;
-  b.addEventListener('click', () => showTask(task));
-  $('chips').append(b);
-});
-RUNGS.forEach((r, i) => {
-  const d = document.createElement('div');
-  d.className = 'rung';
-  const b = document.createElement('b');
-  b.textContent = i + 1;
-  d.append(b, r.short);
-  $('ladder').append(d);
-});
-showTask(TASKS[2]);
+async function render() {
+  const id = ++run;
+  const t = current;
+  $('switch').setAttribute('aria-checked', String(on));
+  $('state').textContent = on ? 'ON' : 'OFF';
+  $('ask').textContent = t.ask;
+  for (const b of $('tasks').children) b.setAttribute('aria-pressed', String(b.dataset.id === t.id));
 
-// Ladder walker
-let step = 0;
-let finished = false;
-
-function renderWalker() {
-  const trail = $('trail');
-  trail.replaceChildren(...RUNGS.map((r, i) => {
-    const li = document.createElement('li');
-    const mark = document.createElement('span');
-    mark.className = 'mark';
-    const hit = finished && i === step;
-    mark.textContent = hit ? '→' : i < step ? '✕' : String(i + 1);
-    li.className = hit ? 'hit' : i < step ? '' : 'todo';
-    li.append(mark, r.short);
-    return li;
-  }));
-
-  const card = $('walker-card');
-  const r = RUNGS[step];
-  if (finished) {
-    const task = $('task-input').value.trim();
-    const box = document.createElement('div');
-    box.className = 'result';
-    const h = document.createElement('h3');
-    h.textContent = 'Step ' + (step + 1) + ': ' + r.short;
-    box.append(h);
-    if (task) {
-      const p = document.createElement('p');
-      p.className = 'task';
-      p.textContent = '“' + task + '”';
-      box.append(p);
-    }
-    const p2 = document.createElement('p');
-    p2.style.margin = '0 0 16px';
-    p2.textContent = r.yes;
-    const reset = document.createElement('button');
-    reset.className = 'reset';
-    reset.textContent = 'Start over';
-    reset.addEventListener('click', () => { step = 0; finished = false; renderWalker(); });
-    box.append(p2, reset);
-    card.replaceChildren(box);
+  if (!on) {
+    paint(sample(t.id + '-heavy'));
+    meter(false);
+    steps(0, 0);
+    $('why').textContent = 'Flip the switch to see where it stops.';
     return;
   }
-  const q = document.createElement('div');
-  q.className = 'q';
-  q.innerHTML = '<div class="step"></div><h3></h3><p></p><div class="row"><button class="yes">Yes</button><button class="no">No</button></div>';
-  q.querySelector('.step').textContent = 'Step ' + (step + 1) + ' of 7';
-  q.querySelector('h3').textContent = r.q;
-  q.querySelector('p').textContent = r.hint;
-  q.querySelector('.yes').addEventListener('click', () => { finished = true; renderWalker(); });
-  q.querySelector('.no').addEventListener('click', () => {
-    step++;
-    if (step === RUNGS.length - 1) finished = true; // nothing above fits: smallest complete change
-    renderWalker();
-  });
-  card.replaceChildren(q);
-}
-renderWalker();
 
-// Copy buttons
+  paint(sample(t.id + '-heavy'), 'cut');
+  for (let i = 0; i < t.rung - 1; i++) {
+    steps(i + 1, 0);
+    await wait(170);
+    if (id !== run) return;
+  }
+  steps(t.rung - 1, t.rung);
+  await wait(350);
+  if (id !== run) return;
+  paint(sample(t.id + '-lean'), 'add');
+  meter(true);
+  $('why').innerHTML = '<b></b> ';
+  $('why').querySelector('b').textContent = 'Stopped at step ' + t.rung + '.';
+  $('why').append(t.why);
+}
+
+STEPS.forEach((text, i) => {
+  const li = document.createElement('li');
+  const n = document.createElement('i');
+  n.textContent = i + 1;
+  li.append(n, text);
+  $('steps').append(li);
+});
+
+TASKS.forEach((t) => {
+  const b = document.createElement('button');
+  b.className = 'task';
+  b.dataset.id = t.id;
+  b.textContent = t.label;
+  b.addEventListener('click', () => { current = t; render(); });
+  $('tasks').append(b);
+});
+
+$('switch').addEventListener('click', () => {
+  on = !on;
+  $('switch').classList.remove('nudge');
+  render();
+});
+
 document.querySelectorAll('.copy').forEach((btn) => {
   btn.addEventListener('click', async () => {
-    const text = btn.parentElement.firstChild.textContent.trim();
+    const code = btn.previousElementSibling;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(code.textContent);
       btn.textContent = 'Copied';
     } catch {
-      btn.textContent = 'Select & copy';
+      getSelection().selectAllChildren(code);
+      btn.textContent = 'Selected';
     }
     setTimeout(() => (btn.textContent = 'Copy'), 1500);
   });
 });
+
+render();
 </script>
 </body>
 </html>
