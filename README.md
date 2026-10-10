@@ -6,6 +6,8 @@ AI coding agents often over-engineer. They install a date library to format one 
 
 > The best code is often the code you never needed to write.
 
+**[Try the interactive demo →](https://biniyam-fekede.github.io/leantoken/)**
+
 LeanToken is an **experimental platform for measuring coding-agent efficiency**, with code-minimization as the first experiment.
 
 ## The decision ladder
