@@ -137,14 +137,24 @@
 
   /* Install */
   .install { padding-block: 0 56px; }
-  .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 28px; }
-  .way h3 { font: 600 1.05rem var(--body); margin: 0 0 4px; }
-  .way p { margin: 0 0 10px; color: var(--ink-soft); font-size: 0.95rem; }
-  .cmd { display: flex; align-items: center; gap: 10px; background: var(--ink); color: #f1f2fb; border-radius: 12px; padding: 10px 10px 10px 16px; margin-bottom: 8px; min-width: 0; }
-  .cmd code { font: 0.84rem/1.5 var(--mono); overflow-x: auto; white-space: pre; flex: 1; min-width: 0; }
+  /* One card with two tabs; both panels share one grid cell so switching never changes the height. */
+  .installer { border: 1.5px solid var(--line); border-radius: 20px; overflow: hidden; }
+  .tabs { display: flex; gap: 6px; padding: 8px; background: var(--wash); border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tab { flex: none; font: 600 0.95rem var(--body); color: var(--ink-soft); background: transparent; border: 1.5px solid transparent; border-radius: 12px; padding: 9px 16px; cursor: pointer; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--paper); color: var(--ink); border-color: var(--ink); }
+  .panels { display: grid; }
+  .panel { grid-area: 1 / 1; display: grid; gap: 14px; align-content: start; padding: 24px; }
+  .panel[data-hidden] { visibility: hidden; }
+  .panel > p { margin: 0; color: var(--ink-soft); }
+  .cmds { display: grid; gap: 8px; }
+  .cmd { display: flex; align-items: center; gap: 12px; background: var(--ink); color: #f1f2fb; border-radius: 12px; padding: 10px 10px 10px 16px; min-width: 0; }
+  .cmd code { font: 0.86rem/1.5 var(--mono); overflow-x: auto; white-space: pre; flex: 1; min-width: 0; scrollbar-width: none; }
+  .cmd code::-webkit-scrollbar { display: none; }
+  @media (max-width: 600px) { .cmd code { white-space: pre-wrap; overflow-wrap: anywhere; } .panel { padding: 18px; } }
   .copy { flex: none; font: 600 0.8rem var(--body); border: 0; border-radius: 8px; padding: 6px 12px; background: var(--marker); color: var(--ink); cursor: pointer; }
-  .off { font-size: 0.9rem; color: var(--ink-soft); margin: 10px 0 0; }
-  .off code { font-family: var(--mono); background: var(--wash); padding: 2px 6px; border-radius: 6px; }
+  .panel .off { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 0.9rem; margin: 0; padding-top: 14px; border-top: 1px solid var(--line); }
+  .off code { font: 0.82rem var(--mono); color: var(--ink); background: var(--wash); padding: 3px 8px; border-radius: 6px; overflow-wrap: anywhere; }
 
   footer { border-top: 1px solid var(--line); }
   footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; padding-block: 22px 30px; font-size: 0.9rem; color: var(--ink-soft); }
@@ -224,19 +234,27 @@
     <div class="wrap">
       <h2>Add it in a minute</h2>
       <p class="kicker">Keep working the way you do now. Turn it off any time.</p>
-      <div class="ways">
-        <div class="way">
-          <h3>Claude Code</h3>
-          <p>Run these two commands inside Claude Code. It works automatically from then on.</p>
-          <div class="cmd"><code>/plugin marketplace add biniyam-fekede/leantoken</code><button class="copy">Copy</button></div>
-          <div class="cmd"><code>/plugin install leantoken@leantoken</code><button class="copy">Copy</button></div>
-          <p class="off">Turn it off with <code>/plugin disable leantoken</code></p>
+      <div class="installer">
+        <div class="tabs" role="tablist" aria-label="Where you use AI">
+          <button class="tab" role="tab" id="tab-cc" aria-selected="true" aria-controls="panel-cc">Claude Code</button>
+          <button class="tab" role="tab" id="tab-any" aria-selected="false" aria-controls="panel-any">Other agents</button>
         </div>
-        <div class="way">
-          <h3>Cursor, Codex, or any other agent</h3>
-          <p>Adds the checklist to the instruction file your agent already reads.</p>
-          <div class="cmd"><code>npx github:biniyam-fekede/leantoken install --file AGENTS.md</code><button class="copy">Copy</button></div>
-          <p class="off">Remove it with <code>npx github:biniyam-fekede/leantoken uninstall --file AGENTS.md</code></p>
+        <div class="panels">
+          <div class="panel" id="panel-cc" role="tabpanel" aria-labelledby="tab-cc">
+            <p>Run these two commands inside Claude Code. It works automatically from then on.</p>
+            <div class="cmds">
+              <div class="cmd"><code>/plugin marketplace add biniyam-fekede/leantoken</code><button class="copy">Copy</button></div>
+              <div class="cmd"><code>/plugin install leantoken@leantoken</code><button class="copy">Copy</button></div>
+            </div>
+            <p class="off">To turn it off <code>/plugin disable leantoken</code></p>
+          </div>
+          <div class="panel" id="panel-any" role="tabpanel" aria-labelledby="tab-any" data-hidden>
+            <p>For Cursor, Codex, or any agent that reads an instruction file. Run this in your project.</p>
+            <div class="cmds">
+              <div class="cmd"><code>npx github:biniyam-fekede/leantoken install --file AGENTS.md</code><button class="copy">Copy</button></div>
+            </div>
+            <p class="off">To remove it <code>npx github:biniyam-fekede/leantoken uninstall --file AGENTS.md</code></p>
+          </div>
         </div>
       </div>
     </div>
@@ -468,6 +486,19 @@ $('switch').addEventListener('click', () => {
   $('switch').classList.remove('nudge');
   render();
 });
+
+document.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((t) => {
+      const selected = t === tab;
+      t.setAttribute('aria-selected', String(selected));
+      const panel = $(t.getAttribute('aria-controls'));
+      panel.toggleAttribute('data-hidden', !selected);
+      panel.inert = !selected;
+    });
+  });
+});
+$('panel-any').inert = true;
 
 document.querySelectorAll('.copy').forEach((btn) => {
   btn.addEventListener('click', async () => {
