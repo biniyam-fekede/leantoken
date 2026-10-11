@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { appendRecord, DEFAULT_TASKS_DIR, loadTasks, readRecords, runTask } from './bench.js';
+import { appendRecord, DEFAULT_TASKS_DIR, loadTasks, readRecords, rulesFor, runTask } from './bench.js';
+import { exportSite } from './export.js';
 import { formatReport, type Variant } from './metrics.js';
 import { install, rulesText, rulesVersion, uninstall } from './rules.js';
 
@@ -22,7 +23,12 @@ Bench options:
   --timeout SECONDS    Per-run agent timeout (default: 600)
   --out FILE           JSONL results file (default: results/runs.jsonl)
   --tasks-dir DIR      Task directory (default: bundled benchmark-tasks)
-  --keep               Keep the temp checkouts for inspection`;
+  --concurrency N      Runs in parallel (default: 1)
+  --keep               Keep the temp checkouts for inspection
+
+Variants: baseline, leantoken, or no-step-1 … no-step-7 (the ruleset with that checklist step removed).
+
+  leantoken export    [--out FILE] [--site docs/results.json]   Write results for the project page`;
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -36,6 +42,8 @@ const { values, positionals } = parseArgs({
     timeout: { type: 'string', default: '600' },
     out: { type: 'string', default: 'results/runs.jsonl' },
     keep: { type: 'boolean', default: false },
+    concurrency: { type: 'string', default: '1' },
+    site: { type: 'string', default: 'docs/results.json' },
     help: { type: 'boolean', short: 'h' },
   },
 });
@@ -62,18 +70,27 @@ switch (values.help ? 'help' : positionals[0]) {
     const runs = Number(values.runs);
     if (!tasks.length) throw new Error('No matching tasks.');
     const opts = { model: values.model, timeoutMs: Number(values.timeout) * 1000, keep: values.keep };
-    // Interleave variants within each repetition so drift (rate limits, model updates) hits both equally.
-    for (const task of tasks) {
-      for (let i = 1; i <= runs; i++) {
-        for (const variant of variants) {
-          process.stdout.write(`${task.id} [${variant}] run ${i}/${runs} ... `);
-          const r = await runTask(task, variant, opts);
-          appendRecord(values.out, r);
-          console.log(r.error ? `error: ${r.error.split('\n')[0]}` : `${r.testsPassed}/${r.testsTotal} tests, ${r.linesAdded + r.linesRemoved} lines, ${(r.durationMs / 1000).toFixed(1)}s`);
-        }
+    variants.forEach(rulesFor); // fail fast on a typo before spending any runs
+    // Interleave variants within each repetition so drift (rate limits, model updates) hits all of them equally.
+    const jobs = tasks.flatMap((task) => Array.from({ length: runs }, (_, i) => variants.map((variant) => ({ task, variant, i: i + 1 }))).flat());
+    let next = 0;
+    let done = 0;
+    const worker = async () => {
+      while (next < jobs.length) {
+        const { task, variant, i } = jobs[next++];
+        const r = await runTask(task, variant, opts);
+        appendRecord(values.out, r);
+        const result = r.error ? `error: ${r.error.split('\n')[0]}` : `${r.testsPassed}/${r.testsTotal} tests, ${r.linesAdded + r.linesRemoved} lines, ${(r.durationMs / 1000).toFixed(1)}s`;
+        console.log(`[${++done}/${jobs.length}] ${task.id} [${variant}] run ${i}: ${result}`);
       }
-    }
+    };
+    await Promise.all(Array.from({ length: Math.max(1, Number(values.concurrency)) }, worker));
     console.log(`\n${formatReport(readRecords(values.out))}`);
+    break;
+  }
+  case 'export': {
+    const summary = exportSite(readRecords(values.out), values.site);
+    console.log(`Wrote ${summary.tasks} tasks from ${summary.runs} runs to ${values.site}.`);
     break;
   }
   case 'report': {

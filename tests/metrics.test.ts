@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { change, formatReport, median, newDependencies, parseNodeTest, parseNumstat, parseRung, type RunRecord } from '../src/metrics.js';
+import { change, formatReport, median, medianTaskChange, newDependencies, parseNodeTest, parseNumstat, parseRung, type RunRecord } from '../src/metrics.js';
 
 describe('parseNumstat', () => {
   it('sums lines and skips lockfiles and binaries', () => {
@@ -57,5 +57,19 @@ describe('formatReport', () => {
     const report = formatReport([rec('baseline', 40), rec('baseline', 999, { error: 'boom' }), rec('leantoken', 10)]);
     expect(report).toMatch(/Lines changed\s+40\s/);
     expect(report).toMatch(/Tests all pass\s+50%\s+100%/);
+  });
+});
+
+describe('medianTaskChange', () => {
+  const r = (task: string, variant: string, lines: number): RunRecord => ({
+    task, variant, model: 'm', rulesVersion: '1', timestamp: '', durationMs: 1000, inputTokens: 0, outputTokens: 10,
+    costUsd: 0.01, linesAdded: lines, linesRemoved: 0, newDependencies: [], testsPassed: 1, testsTotal: 1, rung: null,
+  });
+  it('takes the median of per-task changes so one big task cannot dominate', () => {
+    const recs = [r('a', 'baseline', 10), r('a', 'leantoken', 5), r('b', 'baseline', 1000), r('b', 'leantoken', 1000), r('c', 'baseline', 20), r('c', 'leantoken', 15)];
+    expect(medianTaskChange(recs, 'baseline', 'leantoken', 'lines')).toBe(-25);
+  });
+  it('lists ablation variants in the report', () => {
+    expect(formatReport([r('a', 'baseline', 10), r('a', 'leantoken', 5), r('a', 'no-step-3', 8)])).toMatch(/no-step-3\s+-20%/);
   });
 });

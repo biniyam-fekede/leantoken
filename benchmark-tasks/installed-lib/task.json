@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `dueDate(invoiceDate)` in src/billing.js. Return a new Date that is 30 days after `invoiceDate`, formatted as an ISO calendar date string like \"2026-11-09\"."
+}

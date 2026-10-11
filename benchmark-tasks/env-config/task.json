@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `loadConfig(envPath)` in src/config.js. Read KEY=VALUE settings from the .env file at `envPath` and return `{ port, databaseUrl }` from its PORT (as a number) and DATABASE_URL entries."
+}

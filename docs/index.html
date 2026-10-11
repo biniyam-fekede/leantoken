@@ -4,24 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LeanToken</title>
-<meta name="description" content="LeanToken makes AI coding agents write less code: it checks for a simpler way before writing anything.">
+<meta name="description" content="LeanToken makes AI coding agents write less code, and measures what that really costs.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FFD93D'/><path d='M10 8v16h13' stroke='%2314152B' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-  /* Layout: one bright screen. Short hero, then the switch demo is the page. Install and footer stay small. */
+  /* Layout: one bright page. Short hero, the switch demo on real runs, measured results, install. */
   :root {
     color-scheme: light;
     --paper: #ffffff;
-    --wash: #f3f5ff;          /* faint blue-tinted panel */
+    --wash: #f3f5ff;
     --ink: #14152b;
     --ink-soft: #565b7a;
+    --faint: #a3a7bd;
     --line: #e2e5f3;
-    --marker: #ffd93d;        /* highlighter yellow: the one bold color */
-    --cut: #ff4f3f;           /* removed code */
+    --marker: #ffd93d;
+    --cut: #e5402f;
     --cut-wash: #ffe9e6;
-    --keep: #0e9f55;          /* kept code */
+    --keep: #0b8f4b;
     --keep-wash: #e3f7ec;
     --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
     --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -34,30 +35,38 @@
   :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-  header .wrap { display: flex; align-items: center; justify-content: space-between; padding-block: 18px; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; }
   .wordmark { font: 800 1.35rem var(--display); letter-spacing: -0.03em; text-decoration: none; }
-  .wordmark span { background: var(--marker); padding: 0 4px; border-radius: 4px; }
-  .gh { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--ink); }
+  .wordmark span { background: var(--marker); padding: 0 3px; border-radius: 4px; }
+  .nav { display: flex; align-items: center; gap: 20px; font-weight: 500; font-size: 0.95rem; }
+  .nav a:not(.gh) { text-decoration: none; color: var(--ink-soft); }
+  .nav a:not(.gh):hover { color: var(--ink); }
+  @media (max-width: 560px) { .nav a:not(.gh) { display: none; } }
+  .gh { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; text-decoration: none; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--ink); }
   .gh:hover { background: var(--ink); color: var(--paper); }
 
   .hero { padding-block: 28px 32px; }
   h1 { font: 800 clamp(2.3rem, 6.2vw, 4.4rem)/1.02 var(--display); letter-spacing: -0.04em; margin: 0 0 18px; text-wrap: balance; max-width: 15ch; }
   mark { background: linear-gradient(transparent 55%, var(--marker) 55%); color: inherit; padding: 0 2px; }
-  .sub { font-size: 1.15rem; color: var(--ink-soft); max-width: 54ch; margin: 0 0 24px; }
+  .sub { font-size: 1.15rem; color: var(--ink-soft); max-width: 56ch; margin: 0 0 24px; }
   .actions { display: flex; flex-wrap: wrap; gap: 12px; }
-  .btn { font: 600 1rem var(--body); text-decoration: none; padding: 13px 22px; border-radius: 12px; border: 1.5px solid var(--ink); cursor: pointer; }
+  .btn { font: 600 1rem var(--body); text-decoration: none; padding: 13px 22px; border-radius: 12px; border: 1.5px solid var(--ink); }
   .btn.solid { background: var(--ink); color: var(--paper); }
   .btn.solid:hover { background: #2a2c52; }
-  .btn.plain { background: var(--paper); }
   .btn.plain:hover { background: var(--wash); }
 
+  h2 { font: 800 clamp(1.7rem, 3.5vw, 2.3rem)/1.1 var(--display); letter-spacing: -0.03em; margin: 0 0 8px; text-wrap: balance; }
+  .kicker { color: var(--ink-soft); margin: 0 0 22px; max-width: 62ch; }
+
   /* Demo */
-  .demo { background: var(--wash); border-radius: 24px; padding: 20px; margin-block: 8px 56px; }
+  .demo { background: var(--wash); border-radius: 24px; padding: 20px; margin-block: 8px 64px; }
   .demo-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
-  .tasks { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; min-width: 0; }
+  .picker { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+  .tasks { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
   .task { flex: none; font: 500 0.92rem var(--body); padding: 8px 14px; border-radius: 999px; border: 1.5px solid transparent; background: transparent; color: var(--ink-soft); cursor: pointer; }
   .task:hover { color: var(--ink); background: var(--paper); }
   .task[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--ink); }
+  select { flex: none; font: 500 0.92rem var(--body); color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 12px; max-width: 150px; cursor: pointer; }
 
   .switch { display: flex; align-items: center; gap: 12px; font: 600 1rem var(--body); background: var(--paper); border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 8px 6px 18px; cursor: pointer; color: var(--ink); }
   .switch .track { width: 58px; height: 32px; border-radius: 999px; background: var(--line); position: relative; transition: background .25s; }
@@ -70,38 +79,64 @@
 
   .stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
   @media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
-
   .editor { background: var(--paper); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
   .ask { display: flex; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 0.98rem; }
   .ask b { flex: none; font: 600 0.75rem var(--mono); background: var(--ink); color: var(--paper); border-radius: 6px; padding: 3px 7px; height: fit-content; margin-top: 2px; }
-  pre { margin: 0; padding: 14px 0; overflow-x: auto; font: 0.84rem/1.65 var(--mono); min-height: 260px; }
-  pre span { display: block; white-space: pre; padding-right: 18px; transition: background .2s, opacity .3s; }
-  pre span::before { content: attr(data-n); display: inline-block; width: 3.2em; padding-right: 1.2em; text-align: right; color: #b3b7cc; user-select: none; }
-  pre span.cm { color: var(--ink-soft); font-style: italic; }
-  pre span.cut { background: var(--cut-wash); color: var(--cut); text-decoration: line-through; text-decoration-color: rgba(255, 79, 63, .6); }
-  pre span.add { background: var(--keep-wash); animation: grow .35s ease-out both; }
+  .ask code { font: 0.88em var(--mono); background: var(--wash); padding: 1px 5px; border-radius: 4px; }
+  pre { margin: 0; padding: 12px 0; overflow-x: auto; font: 0.82rem/1.65 var(--mono); min-height: 240px; }
+  pre span { display: block; white-space: pre; padding: 0 18px; transition: background .2s; }
+  pre .file { color: var(--ink); font-weight: 600; padding-block: 4px; }
+  pre .hunk { color: var(--faint); }
+  pre .add { background: var(--keep-wash); }
+  pre .add::before { content: "+ "; color: var(--keep); }
+  pre .del { background: var(--cut-wash); }
+  pre .del::before { content: "− "; color: var(--cut); }
+  pre .ctx::before { content: "  "; }
+  pre .ctx { color: var(--ink-soft); }
+  pre .none { white-space: normal; color: var(--ink-soft); font-family: var(--body); font-size: 1rem; padding-block: 24px; }
+  pre.cutting .add, pre.cutting .del { background: var(--cut-wash); color: var(--cut); text-decoration: line-through; }
+  pre.growing span { animation: grow .35s ease-out both; }
   @keyframes grow { from { opacity: 0; transform: translateY(-4px); } }
-  .meter { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 0.92rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-  .meter strong { color: var(--ink); font: 600 1rem var(--mono); }
-  .meter s { color: var(--cut); }
-  .meter .saved { margin-left: auto; font-weight: 600; color: var(--keep); }
+  .meter { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .meter strong { color: var(--ink); font: 600 0.95rem var(--mono); }
+  .meter .tag { margin-left: auto; font-weight: 600; }
+  .good { color: var(--keep); }
+  .bad { color: var(--cut); }
 
   .checklist { background: var(--paper); border-radius: 16px; border: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-  .checklist h2 { font: 800 1.15rem var(--display); letter-spacing: -0.02em; margin: 0; }
+  .checklist h3 { font: 800 1.15rem var(--display); letter-spacing: -0.02em; margin: 0; }
   .checklist ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
   .checklist li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; font-size: 0.92rem; color: var(--ink-soft); transition: background .2s, color .2s; }
-  .checklist li i { font: normal 600 0.75rem var(--mono); width: 22px; height: 22px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--wash); color: var(--ink-soft); }
-  .checklist li.no { color: #a3a7bd; }
-  .checklist li.no i { background: transparent; color: #a3a7bd; }
+  .checklist li i { font: normal 600 0.75rem var(--mono); width: 22px; height: 22px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--wash); }
+  .checklist li.no { color: var(--faint); }
+  .checklist li.no i { background: transparent; }
   .checklist li.hit { background: var(--marker); color: var(--ink); font-weight: 600; }
   .checklist li.hit i { background: var(--ink); color: var(--marker); }
-  .why { font-size: 0.9rem; margin: 0; color: var(--ink-soft); min-height: 3em; }
-  .why b { color: var(--ink); }
-  .fine { font-size: 0.8rem; color: var(--ink-soft); margin: 14px 4px 0; }
+  .why { font-size: 0.9rem; margin: 0; color: var(--ink-soft); }
+  .fine { font-size: 0.82rem; color: var(--ink-soft); margin: 14px 4px 0; }
+
+  /* Results */
+  .results { padding-block: 0 64px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 36px; }
+  @media (max-width: 640px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tile { border: 1.5px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+  .tile b { display: block; font: 800 clamp(1.6rem, 4vw, 2.2rem)/1.1 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .tile span { color: var(--ink-soft); font-size: 0.92rem; }
+  .ablation h3 { font: 600 1.1rem var(--body); margin: 0 0 4px; }
+  .ablation > p { color: var(--ink-soft); margin: 0 0 14px; font-size: 0.95rem; max-width: 64ch; }
+  .bars { display: grid; gap: 2px; font-size: 0.9rem; }
+  .bar-row { display: grid; grid-template-columns: minmax(150px, 1.1fr) 1fr 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .bar-row.head { color: var(--ink-soft); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; border: 0; }
+  .bar-row.full { font-weight: 600; }
+  .bar { position: relative; height: 22px; }
+  .bar::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px solid var(--faint); }
+  .bar i { position: absolute; top: 4px; height: 14px; border-radius: 3px; }
+  .bar em { position: absolute; top: 1px; font: normal 0.75rem var(--mono); color: var(--ink); }
+  @media (max-width: 560px) { .bar-row { grid-template-columns: 1fr 1fr; } .bar-row > :first-child { grid-column: 1 / -1; } }
+  .readmore { display: inline-block; margin-top: 20px; font-weight: 600; }
 
   /* Install */
   .install { padding-block: 0 56px; }
-  .install h2 { font: 800 clamp(1.7rem, 3.5vw, 2.3rem)/1.1 var(--display); letter-spacing: -0.03em; margin: 0 0 22px; }
   .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 28px; }
   .way h3 { font: 600 1.05rem var(--body); margin: 0 0 4px; }
   .way p { margin: 0 0 10px; color: var(--ink-soft); font-size: 0.95rem; }
@@ -120,10 +155,15 @@
 <header>
   <div class="wrap">
     <a class="wordmark" href="#">lean<span>token</span></a>
-    <a class="gh" href="https://github.com/biniyam-fekede/leantoken">
-      <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      GitHub
-    </a>
+    <nav class="nav">
+      <a href="#results">Results</a>
+      <a href="writeup.html">Write-up</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/biniyam-fekede/leantoken">
+        <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
   </div>
 </header>
 
@@ -131,10 +171,10 @@
   <section class="hero">
     <div class="wrap">
       <h1>Your AI writes too much code. Make it write <mark>less</mark>.</h1>
-      <p class="sub">LeanToken is a free plugin for AI coding agents. Before your agent writes anything, it checks for a simpler way: code you already have, something built in, or no change at all.</p>
+      <p class="sub">LeanToken is a free plugin for AI coding agents. Before your agent writes anything, it checks for a simpler way: code you already have, something built in, or no change at all. Then it measures what that actually saves.</p>
       <div class="actions">
         <a class="btn solid" href="#install">Install it</a>
-        <a class="btn plain" href="https://github.com/biniyam-fekede/leantoken">See the code</a>
+        <a class="btn plain" href="#results">See the results</a>
       </div>
     </div>
   </section>
@@ -142,37 +182,55 @@
   <div class="wrap">
     <section class="demo" aria-label="Demo">
       <div class="demo-top">
-        <div class="tasks" id="tasks" role="group" aria-label="Pick a task"></div>
+        <div class="picker">
+          <div class="tasks" id="tasks" role="group" aria-label="Featured tasks"></div>
+          <select id="all-tasks" aria-label="All tasks"><option value="">All tasks…</option></select>
+        </div>
         <button class="switch nudge" id="switch" role="switch" aria-checked="false">
           LeanToken <span class="track"><span class="knob"></span></span><span class="state" id="state">OFF</span>
         </button>
       </div>
       <div class="stage">
         <div class="editor">
-          <div class="ask"><b>you</b><span id="ask"></span></div>
+          <div class="ask"><b>you</b><span id="ask">Loading results…</span></div>
           <pre id="code" aria-live="polite"></pre>
           <div class="meter" id="meter"></div>
         </div>
         <aside class="checklist">
-          <h2>What it checks first</h2>
+          <h3>What it checks first</h3>
           <ol id="steps"></ol>
-          <p class="why" id="why">Flip the switch to see where it stops.</p>
+          <p class="why" id="why">Flip the switch to see where it stopped.</p>
         </aside>
       </div>
-      <p class="fine">The "off" code is a hand-written example of a common over-built answer. The "on" code passes the task's hidden tests in the LeanToken benchmark.</p>
+      <p class="fine" id="fine">Real code written by Claude in the LeanToken benchmark. Each side shows a typical run, and hidden tests check every result.</p>
     </section>
   </div>
+
+  <section class="results" id="results">
+    <div class="wrap">
+      <h2>What happened when we measured it</h2>
+      <p class="kicker" id="results-kicker"></p>
+      <div class="tiles" id="tiles"></div>
+      <div class="ablation">
+        <h3>Which checklist steps matter?</h3>
+        <p>We removed one step at a time and re-ran every task. Each bar shows the change against an agent with no LeanToken at all. Bars to the left mean less.</p>
+        <div class="bars" id="bars"></div>
+      </div>
+      <a class="readmore" href="writeup.html">Read the full write-up →</a>
+    </div>
+  </section>
 
   <section class="install" id="install">
     <div class="wrap">
       <h2>Add it in a minute</h2>
+      <p class="kicker">Keep working the way you do now. Turn it off any time.</p>
       <div class="ways">
         <div class="way">
           <h3>Claude Code</h3>
           <p>Run these two commands inside Claude Code. It works automatically from then on.</p>
           <div class="cmd"><code>/plugin marketplace add biniyam-fekede/leantoken</code><button class="copy">Copy</button></div>
           <div class="cmd"><code>/plugin install leantoken@leantoken</code><button class="copy">Copy</button></div>
-          <p class="off">Turn it off any time with <code>/plugin disable leantoken</code></p>
+          <p class="off">Turn it off with <code>/plugin disable leantoken</code></p>
         </div>
         <div class="way">
           <h3>Cursor, Codex, or any other agent</h3>
@@ -187,217 +245,10 @@
 
 <footer>
   <div class="wrap">
-    <span>LeanToken is open source (MIT). It includes a benchmark so you can measure the savings yourself.</span>
+    <span>LeanToken is open source (MIT). Every number here comes from the benchmark in the repo, so you can re-run it.</span>
     <a href="https://github.com/biniyam-fekede/leantoken">github.com/biniyam-fekede/leantoken</a>
   </div>
 </footer>
-
-<!-- Example code lives in text/plain blocks so it needs no escaping. -->
-<script type="text/plain" id="already-done-heavy">export function sum(numbers) {
-  if (!Array.isArray(numbers)) {
-    throw new TypeError('sum expects an array');
-  }
-  if (numbers.length === 0) {
-    return 0;
-  }
-  let total = 0;
-  for (const n of numbers) {
-    if (typeof n !== 'number' || Number.isNaN(n)) {
-      throw new TypeError('Invalid number: ' + n);
-    }
-    total += n;
-  }
-  return total;
-}</script>
-<script type="text/plain" id="already-done-lean">// No change. This already returns 0 for []:
-export function sum(numbers) {
-  return numbers.reduce((total, n) => total + n, 0);
-}</script>
-
-<script type="text/plain" id="reuse-csv-heavy">export function loadUsers(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const headers = splitLine(lines[0]);
-  return lines.slice(1).map((line) => {
-    const values = splitLine(line);
-    const row = {};
-    headers.forEach((h, i) => (row[h] = values[i] ?? ''));
-    return { name: row.name, email: row.email, age: Number(row.age) };
-  });
-}
-
-function splitLine(line) {
-  const out = [];
-  let field = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"' && line[i + 1] === '"' && inQuotes) {
-      field += '"';
-      i++;
-    } else if (c === '"') {
-      inQuotes = !inQuotes;
-    } else if (c === ',' && !inQuotes) {
-      out.push(field);
-      field = '';
-    } else {
-      field += c;
-    }
-  }
-  out.push(field);
-  return out;
-}</script>
-<script type="text/plain" id="reuse-csv-lean">import { parseCsv } from './csv.js';
-
-export function loadUsers(text) {
-  return parseCsv(text).map((u) => ({ ...u, age: Number(u.age) }));
-}</script>
-
-<script type="text/plain" id="format-date-heavy">const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-export function formatDate(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-    throw new TypeError('formatDate expects a valid Date');
-  }
-  const month = MONTHS[date.getUTCMonth()];
-  const day = date.getUTCDate();
-  const year = date.getUTCFullYear();
-  return month + ' ' + day + ', ' + year;
-}</script>
-<script type="text/plain" id="format-date-lean">export function formatDate(date) {
-  return date.toLocaleDateString('en-US', {
-    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC',
-  });
-}</script>
-
-<script type="text/plain" id="unique-id-heavy">// npm install uuid
-import { v4 as uuidv4 } from 'uuid';
-
-export function createId() {
-  return uuidv4();
-}</script>
-<script type="text/plain" id="unique-id-lean">export function createId() {
-  return crypto.randomUUID();
-}</script>
-
-<script type="text/plain" id="deep-clone-heavy">export function cloneSettings(settings) {
-  return deepClone(settings, new WeakMap());
-}
-
-function deepClone(value, seen) {
-  if (value === null || typeof value !== 'object') return value;
-  if (seen.has(value)) return seen.get(value);
-  if (value instanceof Date) return new Date(value.getTime());
-  if (value instanceof Map) {
-    const copy = new Map();
-    seen.set(value, copy);
-    for (const [k, v] of value) copy.set(deepClone(k, seen), deepClone(v, seen));
-    return copy;
-  }
-  if (Array.isArray(value)) {
-    const copy = [];
-    seen.set(value, copy);
-    for (const item of value) copy.push(deepClone(item, seen));
-    return copy;
-  }
-  const copy = {};
-  seen.set(value, copy);
-  for (const key of Object.keys(value)) copy[key] = deepClone(value[key], seen);
-  return copy;
-}</script>
-<script type="text/plain" id="deep-clone-lean">export function cloneSettings(settings) {
-  return structuredClone(settings);
-}</script>
-
-<script type="text/plain" id="group-orders-heavy">export function groupOrdersByStatus(orders) {
-  const groups = {};
-  for (const order of orders) {
-    const key = order.status;
-    if (!Object.prototype.hasOwnProperty.call(groups, key)) {
-      groups[key] = [];
-    }
-    groups[key].push(order);
-  }
-  return groups;
-}</script>
-<script type="text/plain" id="group-orders-lean">export function groupOrdersByStatus(orders) {
-  return Object.groupBy(orders, (order) => order.status);
-}</script>
-
-<script type="text/plain" id="validate-email-heavy">const LOCAL_PART = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
-const DOMAIN_LABEL = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
-
-export function isValidEmail(value) {
-  if (typeof value !== 'string') return false;
-  if (value.length === 0 || value.length > 254) return false;
-  const at = value.lastIndexOf('@');
-  if (at <= 0 || at === value.length - 1) return false;
-  const local = value.slice(0, at);
-  const domain = value.slice(at + 1);
-  if (local.length > 64) return false;
-  if (!LOCAL_PART.test(local)) return false;
-  const labels = domain.split('.');
-  if (labels.length < 2) return false;
-  for (const label of labels) {
-    if (!DOMAIN_LABEL.test(label)) return false;
-  }
-  const tld = labels[labels.length - 1];
-  if (!/^[A-Za-z]{2,}$/.test(tld)) return false;
-  return true;
-}</script>
-<script type="text/plain" id="validate-email-lean">export function isValidEmail(value) {
-  return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}</script>
-
-<script type="text/plain" id="cache-rate-heavy">class TTLCache {
-  constructor({ ttlMs = 60_000, maxEntries = 1000, now = Date.now } = {}) {
-    this.ttlMs = ttlMs;
-    this.maxEntries = maxEntries;
-    this.now = now;
-    this.store = new Map();
-    this.stats = { hits: 0, misses: 0, evictions: 0 };
-  }
-
-  get(key) {
-    const entry = this.store.get(key);
-    if (!entry || this.now() - entry.at >= this.ttlMs) {
-      this.stats.misses++;
-      return undefined;
-    }
-    this.stats.hits++;
-    return entry.value;
-  }
-
-  set(key, value) {
-    if (this.store.size >= this.maxEntries) {
-      this.store.delete(this.store.keys().next().value);
-      this.stats.evictions++;
-    }
-    this.store.set(key, { value, at: this.now() });
-  }
-}
-
-const rateCache = new TTLCache({ ttlMs: 60_000 });
-
-export async function getExchangeRate(currency, fetchRate, now = Date.now) {
-  rateCache.now = now;
-  const cached = rateCache.get(currency);
-  if (cached !== undefined) return cached;
-  const rate = await fetchRate(currency);
-  rateCache.set(currency, rate);
-  return rate;
-}</script>
-<script type="text/plain" id="cache-rate-lean">const cache = new Map();
-
-export async function getExchangeRate(currency, fetchRate, now = Date.now) {
-  const hit = cache.get(currency);
-  if (hit && now() - hit.at < 60_000) return hit.rate;
-  const rate = await fetchRate(currency);
-  cache.set(currency, { rate, at: now() });
-  return rate;
-}</script>
 
 <script>
 const STEPS = [
@@ -409,49 +260,75 @@ const STEPS = [
   'Does it need a new abstraction?',
   'Write the smallest change',
 ];
-
-const TASKS = [
-  { id: 'format-date', label: 'Format a date', rung: 3, ask: 'Format a date like "October 10, 2026", using the UTC day.', why: 'JavaScript can already format dates with Intl. No month list needed.' },
-  { id: 'deep-clone', label: 'Deep copy', rung: 3, ask: 'Make a deep copy of settings that can hold nested objects, Dates and Maps.', why: 'structuredClone copies nested objects, Dates and Maps out of the box.' },
-  { id: 'unique-id', label: 'Make an ID', rung: 3, ask: 'Generate a random UUID to use as a database key.', why: 'crypto.randomUUID() is built in, so there is no reason to install a package.', deps: ['uuid'] },
-  { id: 'reuse-csv', label: 'Parse CSV', rung: 2, ask: 'Load users from CSV text with a name,email,age header.', why: 'The project already has a tested parseCsv helper. It reuses that instead of writing a second parser.' },
-  { id: 'group-orders', label: 'Group a list', rung: 3, ask: 'Group orders by their status.', why: 'Object.groupBy does exactly this in one call.' },
-  { id: 'cache-rate', label: 'Add caching', rung: 7, ask: 'Cache exchange rates for 60 seconds so we stop refetching them.', why: 'Nothing built in fits, so it writes the smallest thing that works: a Map with timestamps, not a cache class.' },
-  { id: 'validate-email', label: 'Check an email', rung: 7, ask: 'Validate signup emails: no spaces, must have an @ and a dot in the domain.', why: 'It writes one regex that meets the stated rules, not a full email parser.' },
-  { id: 'already-done', label: 'Already works', rung: 1, ask: 'Make sure sum() returns 0 for an empty array.', why: 'It already does. The right change here is no change.', unchanged: true },
-];
+const SHORT = ['needed?', 'in codebase?', 'built-in?', 'platform?', 'installed lib?', 'abstraction?', 'smallest change'];
 
 const $ = (id) => document.getElementById(id);
-const sample = (id) => $(id).textContent;
-const loc = (code) => code.split('\n').filter((l) => l.trim() && !l.trim().startsWith('//')).length;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+const signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(Math.round(n)) + '%';
+const pct = (n) => Math.round(n * 100) + '%';
+const fmtCost = (n) => '$' + n.toFixed(3);
 
-let current = TASKS[0];
+let data;
+let current;
 let on = false;
-let run = 0; // cancels an animation that is still running when the user clicks again
+let run = 0;
 
-function paint(code, cls = '') {
-  $('code').replaceChildren(...code.split('\n').map((line, i) => {
-    const s = document.createElement('span');
-    s.dataset.n = i + 1;
-    s.textContent = line || ' ';
-    s.className = (line.trim().startsWith('//') ? 'cm ' : '') + cls;
-    if (cls === 'add') s.style.animationDelay = i * 40 + 'ms';
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+/** Turn a git diff into display lines: file names, hunks, added, removed and context lines. */
+function diffLines(patch) {
+  const out = [];
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('diff --git')) out.push(['file', line.split(' b/')[1] || '']);
+    else if (/^(index |--- |\+\+\+ |new file|deleted file|similarity|rename |old mode|new mode)/.test(line)) continue;
+    else if (line.startsWith('@@')) out.push(['hunk', '⋯']);
+    else if (line.startsWith('+')) out.push(['add', line.slice(1)]);
+    else if (line.startsWith('-')) out.push(['del', line.slice(1)]);
+    else if (line.startsWith(' ')) out.push(['ctx', line.slice(1)]);
+    else if (line.startsWith('\\')) continue;
+  }
+  while (out.length && out[out.length - 1][0] === 'ctx' && !out[out.length - 1][1].trim()) out.pop();
+  return out;
+}
+
+function paint(patch, mode) {
+  const pre = $('code');
+  pre.className = mode || '';
+  if (!patch.trim()) {
+    pre.replaceChildren(el('span', 'none', 'No code changed. The agent checked and found the code already does this.'));
+    return;
+  }
+  pre.replaceChildren(...diffLines(patch).map(([kind, text], i) => {
+    const s = el('span', kind, text || ' ');
+    if (mode === 'growing') s.style.animationDelay = Math.min(i * 30, 600) + 'ms';
     return s;
   }));
 }
 
-function meter(done) {
-  const t = current;
-  const before = loc(sample(t.id + '-heavy'));
-  const after = t.unchanged ? 0 : loc(sample(t.id + '-lean'));
-  const deps = (t.deps || []).length;
-  $('meter').innerHTML = done
-    ? `<span>Lines of code <strong><s>${before}</s> → ${after}</strong></span>` +
-      `<span>New packages <strong>${deps ? `<s>${deps}</s> → ` : ''}0</strong></span>` +
-      `<span class="saved">${Math.round((1 - after / before) * 100)}% less code</span>`
-    : `<span>Lines of code <strong>${before}</strong></span><span>New packages <strong>${deps}</strong></span>`;
+function meter(side, other) {
+  const m = $('meter');
+  const parts = [
+    ['Lines changed', String(side.lines)],
+    ['Output tokens', Math.round(side.outputTokens).toLocaleString('en-US')],
+    ['Cost', fmtCost(side.costUsd)],
+    ['Tests passed', pct(side.passRate)],
+  ];
+  if (side.newDependencies.length) parts.push(['New packages', side.newDependencies.join(', ')]);
+  m.replaceChildren(...parts.map(([label, value]) => {
+    const s = el('span', '', label + ' ');
+    s.append(el('strong', '', value));
+    return s;
+  }));
+  if (other && other.lines > 0) {
+    const d = (side.lines - other.lines) / other.lines * 100;
+    m.append(el('span', 'tag ' + (d <= 0 ? 'good' : 'bad'), d === 0 ? 'Same amount of code' : signed(d) + ' code vs. off'));
+  }
 }
 
 function steps(upTo, hit) {
@@ -461,56 +338,132 @@ function steps(upTo, hit) {
   });
 }
 
+function askText(prompt) {
+  const span = $('ask');
+  span.replaceChildren();
+  // Render `code` spans from the task prompt.
+  prompt.split(/(`[^`]+`)/).forEach((part) => span.append(part.startsWith('`') ? el('code', '', part.slice(1, -1)) : part));
+}
+
 async function render() {
   const id = ++run;
   const t = current;
   $('switch').setAttribute('aria-checked', String(on));
   $('state').textContent = on ? 'ON' : 'OFF';
-  $('ask').textContent = t.ask;
+  askText(t.prompt);
   for (const b of $('tasks').children) b.setAttribute('aria-pressed', String(b.dataset.id === t.id));
+  $('all-tasks').value = t.id;
 
   if (!on) {
-    paint(sample(t.id + '-heavy'));
-    meter(false);
+    paint(t.baseline.patch);
+    meter(t.baseline);
     steps(0, 0);
-    $('why').textContent = 'Flip the switch to see where it stops.';
+    $('why').textContent = 'Flip the switch to see where it stopped.';
     return;
   }
-
-  paint(sample(t.id + '-heavy'), 'cut');
-  for (let i = 0; i < t.rung - 1; i++) {
+  const rung = t.leantoken.rung;
+  paint(t.baseline.patch, 'cutting');
+  for (let i = 0; i < (rung || 1) - 1; i++) {
     steps(i + 1, 0);
-    await wait(170);
+    await wait(160);
     if (id !== run) return;
   }
-  steps(t.rung - 1, t.rung);
-  await wait(350);
+  steps((rung || 1) - 1, rung || 0);
+  await wait(320);
   if (id !== run) return;
-  paint(sample(t.id + '-lean'), 'add');
-  meter(true);
-  $('why').innerHTML = '<b></b> ';
-  $('why').querySelector('b').textContent = 'Stopped at step ' + t.rung + '.';
-  $('why').append(t.why);
+  paint(t.leantoken.patch, 'growing');
+  meter(t.leantoken, t.baseline);
+  $('why').textContent = rung ? `Stopped at step ${rung}: ${STEPS[rung - 1].toLowerCase()}` : 'The agent did not record a step for this run.';
 }
 
-STEPS.forEach((text, i) => {
-  const li = document.createElement('li');
-  const n = document.createElement('i');
-  n.textContent = i + 1;
-  li.append(n, text);
-  $('steps').append(li);
-});
+function renderResults() {
+  const s = data.summary;
+  const lean = s.variants.find((v) => v.variant === 'leantoken');
+  const runsPer = Math.round(data.tasks.reduce((n, t) => n + t.baseline.runs, 0) / data.tasks.length);
+  const models = data.models.map((m) => 'Claude ' + m[0].toUpperCase() + m.slice(1)).join(', ');
+  $('results-kicker').textContent = `${s.tasks} coding tasks, each run ${runsPer} ${runsPer === 1 ? 'time' : 'times'} with and without LeanToken on ${models}. Hidden tests check every result. Percentages are the median change per task.`;
 
-TASKS.forEach((t) => {
-  const b = document.createElement('button');
-  b.className = 'task';
-  b.dataset.id = t.id;
-  b.textContent = t.label;
-  b.addEventListener('click', () => { current = t; render(); });
-  $('tasks').append(b);
-});
+  const tile = (value, label, goodWhenNegative = true) => {
+    const d = el('div', 'tile');
+    const b = el('b', goodWhenNegative ? (value <= 0 ? 'good' : 'bad') : '', signed(value));
+    d.append(b, el('span', '', label));
+    return d;
+  };
+  const plain = (value, label) => {
+    const d = el('div', 'tile');
+    d.append(el('b', '', value), el('span', '', label));
+    return d;
+  };
+  const deps = (side) => data.tasks.reduce((n, t) => n + t[side].newDependencies.length, 0);
+  $('tiles').replaceChildren(
+    tile(lean.lines, 'lines of code changed'),
+    tile(lean.outputTokens, 'output tokens'),
+    tile(lean.costUsd, 'cost per task'),
+    tile(lean.seconds, 'time per task'),
+    plain(`${pct(s.baselinePassRate)} / ${pct(lean.passRate)}`, 'tests passed, off / on'),
+    plain(`${deps('baseline')} / ${deps('leantoken')}`, 'new packages added, off / on'),
+  );
+
+  const rows = s.variants.filter((v) => v.variant !== 'leantoken').sort((a, b) => a.variant.localeCompare(b.variant));
+  const all = [lean, ...rows];
+  const max = Math.max(10, ...all.flatMap((v) => [Math.abs(v.lines), Math.abs(v.costUsd)]).filter(Number.isFinite));
+  const bar = (value) => {
+    const box = el('div', 'bar');
+    if (!Number.isFinite(value)) return box;
+    const w = Math.abs(value) / max * 50;
+    const i = el('i');
+    i.style.width = w + '%';
+    i.style.left = value < 0 ? 50 - w + '%' : '50%';
+    i.style.background = value <= 0 ? 'var(--keep)' : 'var(--cut)';
+    const label = el('em', '', signed(value));
+    if (value < 0) label.style.right = 50 + w + 1 + '%'; else label.style.left = 50 + w + 1 + '%';
+    box.append(i, label);
+    return box;
+  };
+  const head = el('div', 'bar-row head');
+  head.append(el('span', '', 'Checklist'), el('span', '', 'Code changed'), el('span', '', 'Cost'));
+  $('bars').replaceChildren(head, ...all.map((v) => {
+    const row = el('div', 'bar-row' + (v.variant === 'leantoken' ? ' full' : ''));
+    const n = Number(v.variant.match(/\d/)?.[0]);
+    row.append(el('span', '', v.variant === 'leantoken' ? 'Full checklist' : `Without step ${n} (${SHORT[n - 1]})`), bar(v.lines), bar(v.costUsd));
+    return row;
+  }));
+  if (!rows.length) $('bars').parentElement.hidden = true;
+}
+
+function setup() {
+  STEPS.forEach((text, i) => {
+    const li = el('li');
+    li.append(el('i', '', String(i + 1)), text);
+    $('steps').append(li);
+  });
+
+  const valid = data.tasks.filter((t) => t.baseline.runs && t.leantoken.runs);
+  const drop = (t) => (t.baseline.lines ? (t.leantoken.lines - t.baseline.lines) / t.baseline.lines : 0);
+  // Feature the tasks where the difference is biggest and both sides passed their tests.
+  const featured = [...valid].filter((t) => t.leantoken.passRate === 1 && t.baseline.lines > 0).sort((a, b) => drop(a) - drop(b)).slice(0, 5);
+  featured.forEach((t) => {
+    const b = el('button', 'task', t.id.replace(/-/g, ' '));
+    b.dataset.id = t.id;
+    b.addEventListener('click', () => { current = t; render(); });
+    $('tasks').append(b);
+  });
+  valid.forEach((t) => {
+    const o = el('option', '', t.id.replace(/-/g, ' '));
+    o.value = t.id;
+    $('all-tasks').append(o);
+  });
+  $('all-tasks').addEventListener('change', (e) => {
+    const t = valid.find((x) => x.id === e.target.value);
+    if (t) { current = t; render(); }
+  });
+  current = featured[0] || valid[0];
+  render();
+  renderResults();
+}
 
 $('switch').addEventListener('click', () => {
+  if (!current) return;
   on = !on;
   $('switch').classList.remove('nudge');
   render();
@@ -530,7 +483,10 @@ document.querySelectorAll('.copy').forEach((btn) => {
   });
 });
 
-render();
+fetch('results.json')
+  .then((r) => r.json())
+  .then((d) => { data = d; setup(); })
+  .catch(() => { $('ask').textContent = 'Could not load the benchmark results. Refresh to try again.'; });
 </script>
 </body>
 </html>

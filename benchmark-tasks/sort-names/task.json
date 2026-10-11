@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `sortNames(names)` in src/names.js. Return a new array sorted the way a person would expect: case-insensitive, and accented letters sort next to their base letter (so \"Émile\" comes before \"Zoe\")."
+}

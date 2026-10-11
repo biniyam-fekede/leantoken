@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `paginate(items, page, pageSize)` in src/page.js. Pages start at 1. Return `{ items, page, totalPages }` where `items` is that page of results. Out-of-range pages return an empty items array."
+}

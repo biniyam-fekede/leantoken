@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `parseQuery(search)` in src/query.js. Given a query string like `?q=lean%20token&page=2`, return a plain object `{ q: \"lean token\", page: \"2\" }`. The leading `?` is optional. For repeated keys, keep the last value."
+}

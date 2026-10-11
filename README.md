@@ -53,10 +53,12 @@ leantoken uninstall            # removes exactly that block, nothing else
 ## Benchmark
 
 ```bash
-leantoken tasks                                    # list bundled tasks
-leantoken bench --runs 3 --model sonnet            # paired baseline vs leantoken
+leantoken tasks                                    # list the 28 bundled tasks
+leantoken bench --runs 3 --model sonnet --concurrency 4
 leantoken bench --tasks format-date,reuse-csv --runs 5
+leantoken bench --variants no-step-3 --runs 1      # ablation: the ruleset without step 3
 leantoken report                                   # re-print the summary
+leantoken export                                   # write docs/results.json for the project page
 ```
 
 How a run works:
@@ -65,37 +67,45 @@ How a run works:
 2. `claude -p` runs the task prompt. The `leantoken` variant also gets the ruleset through `--append-system-prompt`. The model, prompt and starting state are otherwise identical.
 3. The runner records tokens, cost and time from Claude Code's JSON output, lines changed from `git diff --numstat` (lockfiles excluded), and new dependencies from `package.json`.
 4. **Hidden tests** are copied in only *after* the agent finishes, so they can't be read or edited, and then run with `node --test`.
-5. Every run is appended to `results/runs.jsonl` (one JSON object per line).
+5. Every run is appended to `results/runs.jsonl` (one JSON object per line), including the diff the agent produced.
 
-Variants are interleaved within each repetition, so drift such as rate limits or model updates affects both sides equally. The report shows medians. Errored runs are excluded from the medians but count as failures in the pass rate.
+Variants are interleaved within each repetition, so drift such as rate limits or model updates affects both sides equally. The headline numbers are the **median of per-task changes**, so one large task can't dominate the result. Errored runs are excluded from the medians but count as failures in the pass rate.
 
 > **Isolation note:** if you installed the LeanToken plugin globally, disable it before benchmarking. Otherwise the baseline gets the rules too.
 
 ### Bundled tasks
 
-| Task | Rung it targets | The lean answer |
-|------|-----------------|-----------------|
-| `already-done` | 1 – unnecessary | No change: `sum([])` already returns 0 |
-| `reuse-csv` | 2 – codebase | Reuse the existing `parseCsv` helper |
-| `format-date` | 3 – stdlib | `Intl` / `toLocaleDateString` |
-| `unique-id` | 3 – stdlib | `crypto.randomUUID()` |
-| `deep-clone` | 3 – stdlib | `structuredClone` |
-| `group-orders` | 3 – stdlib | `Object.groupBy` |
-| `validate-email` | 7 – smallest | One regex, not an RFC 5322 parser |
-| `cache-rate` | 6/7 – no new abstraction | A module-level `Map` with timestamps |
+28 small tasks, each aimed at one checklist step. Every task's hidden tests were checked to fail on the starting code and pass with a minimal correct solution.
+
+| Step | Tasks |
+|------|-------|
+| 1 – not needed | `already-done`, `already-sorted`, `already-trims` |
+| 2 – in the codebase | `reuse-csv`, `reuse-retry`, `reuse-money`, `reuse-chunk` |
+| 3 – standard library | `format-date`, `unique-id`, `deep-clone`, `group-orders`, `url-params`, `relative-time`, `currency-format`, `sort-names`, `dedupe`, `hash-sha256`, `file-ext` |
+| 4 – platform | `date-field`, `env-config` |
+| 5 – installed dependency | `installed-lib` |
+| 6 – no new abstraction | `feature-flag`, `add-option` |
+| 7 – smallest change | `validate-email`, `cache-rate`, `rate-limit`, `paginate`, `password-rules` |
 
 Each task is `benchmark-tasks/<id>/{task.json, repo/, test/}`. To add one, drop in a new folder. Hidden tests must be `*.test.js` files that use `node:test`.
 
 ### Results
 
-No published results yet. Run the benchmark yourself and open a PR with your `results/runs.jsonl`. The MVP targets are listed below. They are goals, not predictions:
+**27 tasks × 3 runs × 2 variants on Claude Sonnet (162 runs).** Raw data, including every diff: [`data/runs-sonnet.jsonl`](data/runs-sonnet.jsonl). Full write-up: [biniyam-fekede.github.io/leantoken/writeup.html](https://biniyam-fekede.github.io/leantoken/writeup.html).
 
-| Metric | Target |
-|--------|--------|
-| Correctness | No meaningful regression |
-| Median code reduction | ≥ 15% |
-| Median cost reduction | ≥ 10% |
-| Median execution time | No increase |
+| Metric (median per-task change) | Result |
+|---|---|
+| Lines changed | 0% on the median task; −50% to −83% on the 5 tasks with an obvious built-in |
+| Output tokens | +7% |
+| Cost | +5% |
+| Time | +13% |
+| Tests passed | 95% without → 96% with |
+| New packages added | 0 → 0 |
+| Decision recorded | 81 of 81 runs |
+
+On small, clearly worded tasks, Sonnet is already fairly lean, so the checklist mostly adds a little overhead. Where a built-in exists, it cuts code sharply and can improve correctness: on `url-params`, the baseline hand-rolled a parser that failed 2 of 3 runs, while LeanToken used `URLSearchParams` and passed 3 of 3. `hash-sha256` failed on both sides because the task didn't specify sync vs. async; that's a task-wording flaw.
+
+Ablation runs (one checklist step removed at a time) are next.
 
 Fewer lines do not automatically mean better code. Correctness is the primary metric.
 

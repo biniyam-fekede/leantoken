@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `extensionOf(filePath)` in src/files.js. Return the file extension including the dot, e.g. \"docs/report.final.pdf\" -> \".pdf\". Return \"\" when there is none, including for dotfiles like \".gitignore\"."
+}

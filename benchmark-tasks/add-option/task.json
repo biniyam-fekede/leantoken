@@ -1,0 +1,3 @@
+{
+  "prompt": "Add an optional `prefix` option to `log(message, options)` in src/log.js. When given, the logged line starts with `[prefix] `. Existing calls without options must keep working."
+}

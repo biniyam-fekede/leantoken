@@ -2,3 +2,5 @@ node_modules/
 dist/
 results/
 .claude/
+!benchmark-tasks/*/repo/node_modules/
+substack-draft.md

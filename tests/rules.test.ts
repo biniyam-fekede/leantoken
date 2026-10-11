@@ -40,3 +40,19 @@ describe('benchmark tasks', () => {
     for (const t of tasks) expect(t.prompt.length).toBeGreaterThan(10);
   });
 });
+
+describe('ablation', () => {
+  it('removes exactly one checklist step', async () => {
+    const { rulesWithout } = await import('../src/rules.js');
+    const { rulesFor } = await import('../src/bench.js');
+    const full = rulesText();
+    const without3 = rulesWithout(3);
+    expect(full).toContain('3. **Standard library?**');
+    expect(without3).not.toContain('3. **Standard library?**');
+    expect(without3).toContain('2. **Already in the codebase?**');
+    expect(full.split('\n').length - without3.split('\n').length).toBe(1);
+    expect(rulesFor('baseline')).toBeNull();
+    expect(rulesFor('no-step-3')).toBe(without3);
+    expect(() => rulesFor('no-step-9')).toThrow(/Unknown variant/);
+  });
+});

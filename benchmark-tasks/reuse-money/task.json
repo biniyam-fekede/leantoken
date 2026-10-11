@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `invoiceLine(order)` in src/invoice.js. `order.totalCents` is an integer number of cents. Return a string like `Total: $1,234.50`."
+}

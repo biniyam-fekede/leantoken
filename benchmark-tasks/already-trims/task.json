@@ -1,0 +1,3 @@
+{
+  "prompt": "Make sure `slugify` in src/slug.js trims leading and trailing whitespace before converting."
+}

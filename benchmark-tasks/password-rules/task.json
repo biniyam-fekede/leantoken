@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `checkPassword(pw)` in src/password.js. Return an array of problems (empty if OK) using exactly these messages: \"at least 12 characters\", \"a letter\", \"a number\"."
+}

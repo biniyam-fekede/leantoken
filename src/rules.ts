@@ -9,6 +9,11 @@ export function rulesText(): string {
   return readFileSync(RULES_PATH, 'utf8');
 }
 
+/** The ruleset with one checklist step removed, for ablation runs. */
+export function rulesWithout(step: number, text = rulesText()): string {
+  return text.split('\n').filter((line) => !line.startsWith(`${step}. **`)).join('\n');
+}
+
 export function rulesVersion(text = rulesText()): string {
   return text.match(/leantoken-rules v([\d.]+)/)?.[1] ?? 'unknown';
 }

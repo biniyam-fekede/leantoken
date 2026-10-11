@@ -1,0 +1,725 @@
+{
+  "generatedAt": "2026-10-11T22:45:54.058Z",
+  "models": [
+    "sonnet"
+  ],
+  "summary": {
+    "tasks": 27,
+    "runs": 162,
+    "variants": [
+      {
+        "variant": "leantoken",
+        "lines": 0,
+        "outputTokens": 7.29483282674772,
+        "costUsd": 4.967344488673606,
+        "seconds": 13.135914958238423,
+        "passRate": 0.9629629629629629
+      }
+    ],
+    "baselinePassRate": 0.9506172839506173
+  },
+  "tasks": [
+    {
+      "id": "add-option",
+      "prompt": "Add an optional `prefix` option to `log(message, options)` in src/log.js. When given, the logged line starts with `[prefix] `. Existing calls without options must keep working.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 3,
+        "outputTokens": 355,
+        "costUsd": 0.10761570000000001,
+        "seconds": 18.445,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/log.js b/src/log.js\nindex fdfde65..cfcc07f 100644\n--- a/src/log.js\n+++ b/src/log.js\n@@ -1,4 +1,5 @@\n // write is injectable for testing.\n export function log(message, options = {}, write = console.log) {\n-  write(message);\n+  const { prefix } = options;\n+  write(prefix ? `[${prefix}] ${message}` : message);\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 376,
+        "costUsd": 0.11272019999999999,
+        "seconds": 18.095,
+        "newDependencies": [],
+        "rung": 7,
+        "patch": "diff --git a/src/log.js b/src/log.js\nindex fdfde65..49e75a1 100644\n--- a/src/log.js\n+++ b/src/log.js\n@@ -1,4 +1,4 @@\n // write is injectable for testing.\n export function log(message, options = {}, write = console.log) {\n-  write(message);\n+  write(options.prefix ? `[${options.prefix}] ${message}` : message);\n }\n"
+      }
+    },
+    {
+      "id": "already-done",
+      "prompt": "Make sure the `sum` function in src/math.js returns 0 when given an empty array.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 0,
+        "outputTokens": 189,
+        "costUsd": 0.0897168,
+        "seconds": 10.901,
+        "newDependencies": [],
+        "rung": null,
+        "patch": ""
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 0,
+        "outputTokens": 203,
+        "costUsd": 0.0945378,
+        "seconds": 11.097,
+        "newDependencies": [],
+        "rung": 1,
+        "patch": ""
+      }
+    },
+    {
+      "id": "already-sorted",
+      "prompt": "Make sure `listMembers` in src/members.js returns members sorted alphabetically by name.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 0,
+        "outputTokens": 165,
+        "costUsd": 0.0893958,
+        "seconds": 10.209,
+        "newDependencies": [],
+        "rung": null,
+        "patch": ""
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 0,
+        "outputTokens": 174,
+        "costUsd": 0.09413880000000001,
+        "seconds": 10.186,
+        "newDependencies": [],
+        "rung": 1,
+        "patch": ""
+      }
+    },
+    {
+      "id": "already-trims",
+      "prompt": "Make sure `slugify` in src/slug.js trims leading and trailing whitespace before converting.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 0,
+        "outputTokens": 153,
+        "costUsd": 0.0893208,
+        "seconds": 9.986,
+        "newDependencies": [],
+        "rung": null,
+        "patch": ""
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 0,
+        "outputTokens": 177,
+        "costUsd": 0.0944238,
+        "seconds": 10.619,
+        "newDependencies": [],
+        "rung": 1,
+        "patch": ""
+      }
+    },
+    {
+      "id": "cache-rate",
+      "prompt": "In src/rates.js, add caching to `getExchangeRate` so that repeated calls for the same currency within 60 seconds return the cached value instead of calling `fetchRate` again. After 60 seconds the rate must be fetched again. Keep the existing function signature.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 10,
+        "outputTokens": 523,
+        "costUsd": 0.1113168,
+        "seconds": 14.469,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/rates.js b/src/rates.js\nindex 5f91eed..4a73d4d 100644\n--- a/src/rates.js\n+++ b/src/rates.js\n@@ -1,4 +1,12 @@\n // fetchRate(currency) -> Promise<number>; `now` is injectable for testing.\n+const cache = new Map();\n+\n export async function getExchangeRate(currency, fetchRate, now = Date.now) {\n-  return fetchRate(currency);\n+  const entry = cache.get(currency);\n+  if (entry && now() - entry.timestamp < 60_000) {\n+    return entry.rate;\n+  }\n+  const rate = await fetchRate(currency);\n+  cache.set(currency, { rate, timestamp: now() });\n+  return rate;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 10,
+        "outputTokens": 568,
+        "costUsd": 0.1167684,
+        "seconds": 16.448,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/rates.js b/src/rates.js\nindex 5f91eed..6b4d1fb 100644\n--- a/src/rates.js\n+++ b/src/rates.js\n@@ -1,4 +1,12 @@\n // fetchRate(currency) -> Promise<number>; `now` is injectable for testing.\n+const cache = new Map(); // { currency -> { value, timestamp } }\n+\n export async function getExchangeRate(currency, fetchRate, now = Date.now) {\n-  return fetchRate(currency);\n+  const entry = cache.get(currency);\n+  if (entry && now() - entry.timestamp < 60_000) {\n+    return entry.value;\n+  }\n+  const value = await fetchRate(currency);\n+  cache.set(currency, { value, timestamp: now() });\n+  return value;\n }\n"
+      }
+    },
+    {
+      "id": "currency-format",
+      "prompt": "Implement `formatPrice(amount, currency)` in src/price.js. Format a number as money in US English for any ISO currency code, e.g. `formatPrice(1234.5, \"EUR\")` -> `€1,234.50`, `formatPrice(1234.5, \"USD\")` -> `$1,234.50`, `formatPrice(500, \"JPY\")` -> `¥500`.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 812,
+        "costUsd": 0.13865190000000002,
+        "seconds": 20.755,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/price.js b/src/price.js\nindex 48ed9e7..d9765d4 100644\n--- a/src/price.js\n+++ b/src/price.js\n@@ -1,3 +1,3 @@\n export function formatPrice(amount, currency) {\n-  throw new Error('Not implemented');\n+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 614,
+        "costUsd": 0.1241766,
+        "seconds": 19.944,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/price.js b/src/price.js\nindex 48ed9e7..d9765d4 100644\n--- a/src/price.js\n+++ b/src/price.js\n@@ -1,3 +1,3 @@\n export function formatPrice(amount, currency) {\n-  throw new Error('Not implemented');\n+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);\n }\n"
+      }
+    },
+    {
+      "id": "date-field",
+      "prompt": "Add a birthday field to the signup form in public/signup.html so users can pick their date of birth. Its form field name must be `birthday`.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 1,
+        "outputTokens": 421,
+        "costUsd": 0.10951469999999999,
+        "seconds": 13.618,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/public/signup.html b/public/signup.html\nindex 46c25a1..ee8994f 100644\n--- a/public/signup.html\n+++ b/public/signup.html\n@@ -9,6 +9,7 @@\n   <form action=\"/signup\" method=\"post\">\n     <label>Name <input name=\"name\" required></label>\n     <label>Email <input type=\"email\" name=\"email\" required></label>\n+    <label>Birthday <input type=\"date\" name=\"birthday\" required></label>\n     <button type=\"submit\">Create account</button>\n   </form>\n </body>\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 1,
+        "outputTokens": 421,
+        "costUsd": 0.1142856,
+        "seconds": 15.997,
+        "newDependencies": [],
+        "rung": 4,
+        "patch": "diff --git a/public/signup.html b/public/signup.html\nindex 46c25a1..ee8994f 100644\n--- a/public/signup.html\n+++ b/public/signup.html\n@@ -9,6 +9,7 @@\n   <form action=\"/signup\" method=\"post\">\n     <label>Name <input name=\"name\" required></label>\n     <label>Email <input type=\"email\" name=\"email\" required></label>\n+    <label>Birthday <input type=\"date\" name=\"birthday\" required></label>\n     <button type=\"submit\">Create account</button>\n   </form>\n </body>\n"
+      }
+    },
+    {
+      "id": "dedupe",
+      "prompt": "Implement `uniqueTags(tags)` in src/tags.js. Return the tags with duplicates removed, keeping the first occurrence of each and preserving order.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 309,
+        "costUsd": 0.10656810000000001,
+        "seconds": 12.549,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/tags.js b/src/tags.js\nindex 7eca784..1232ede 100644\n--- a/src/tags.js\n+++ b/src/tags.js\n@@ -1,3 +1,3 @@\n export function uniqueTags(tags) {\n-  throw new Error('Not implemented');\n+  return [...new Set(tags)];\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 342,
+        "costUsd": 0.11185229999999999,
+        "seconds": 12.781,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/tags.js b/src/tags.js\nindex 7eca784..1232ede 100644\n--- a/src/tags.js\n+++ b/src/tags.js\n@@ -1,3 +1,3 @@\n export function uniqueTags(tags) {\n-  throw new Error('Not implemented');\n+  return [...new Set(tags)];\n }\n"
+      }
+    },
+    {
+      "id": "deep-clone",
+      "prompt": "Implement `cloneSettings(settings)` in src/settings.js. It must return a deep copy so that mutating the copy never affects the original. Settings can contain nested objects, arrays, Date objects, and Map objects, and these types must be preserved.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 12,
+        "outputTokens": 880,
+        "costUsd": 0.13086720000000002,
+        "seconds": 24.521,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/settings.js b/src/settings.js\nindex 5641036..ed08eb4 100644\n--- a/src/settings.js\n+++ b/src/settings.js\n@@ -1,3 +1,13 @@\n export function cloneSettings(settings) {\n-  throw new Error('Not implemented');\n+  if (settings === null || typeof settings !== 'object') return settings;\n+  if (settings instanceof Date) return new Date(settings.getTime());\n+  if (settings instanceof Map) {\n+    const copy = new Map();\n+    for (const [k, v] of settings) copy.set(cloneSettings(k), cloneSettings(v));\n+    return copy;\n+  }\n+  if (Array.isArray(settings)) return settings.map(cloneSettings);\n+  const copy = Object.create(Object.getPrototypeOf(settings));\n+  for (const key of Object.keys(settings)) copy[key] = cloneSettings(settings[key]);\n+  return copy;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 939,
+        "costUsd": 0.13737090000000002,
+        "seconds": 26.917,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/settings.js b/src/settings.js\nindex 5641036..ea6bf33 100644\n--- a/src/settings.js\n+++ b/src/settings.js\n@@ -1,3 +1,3 @@\n export function cloneSettings(settings) {\n-  throw new Error('Not implemented');\n+  return structuredClone(settings);\n }\n"
+      }
+    },
+    {
+      "id": "env-config",
+      "prompt": "Implement `loadConfig(envPath)` in src/config.js. Read KEY=VALUE settings from the .env file at `envPath` and return `{ port, databaseUrl }` from its PORT (as a number) and DATABASE_URL entries.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 18,
+        "outputTokens": 750,
+        "costUsd": 0.1339575,
+        "seconds": 19.728,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/config.js b/src/config.js\nindex 9d84146..6b04b3c 100644\n--- a/src/config.js\n+++ b/src/config.js\n@@ -1,3 +1,19 @@\n+import { readFileSync } from 'fs';\n+\n export function loadConfig(envPath) {\n-  throw new Error('Not implemented');\n+  const raw = readFileSync(envPath, 'utf8');\n+  const entries = Object.fromEntries(\n+    raw\n+      .split('\\n')\n+      .map(line => line.trim())\n+      .filter(line => line && !line.startsWith('#'))\n+      .map(line => {\n+        const eq = line.indexOf('=');\n+        return [line.slice(0, eq).trim(), line.slice(eq + 1).trim()];\n+      })\n+  );\n+  return {\n+    port: Number(entries['PORT']),\n+    databaseUrl: entries['DATABASE_URL'],\n+  };\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 16,
+        "outputTokens": 746,
+        "costUsd": 0.1352331,
+        "seconds": 24.584,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/config.js b/src/config.js\nindex 9d84146..ec0e437 100644\n--- a/src/config.js\n+++ b/src/config.js\n@@ -1,3 +1,17 @@\n+import { readFileSync } from 'fs';\n+\n export function loadConfig(envPath) {\n-  throw new Error('Not implemented');\n+  const entries = Object.fromEntries(\n+    readFileSync(envPath, 'utf8')\n+      .split('\\n')\n+      .filter(line => /^[^#\\s]/.test(line) && line.includes('='))\n+      .map(line => {\n+        const eq = line.indexOf('=');\n+        return [line.slice(0, eq).trim(), line.slice(eq + 1).trim()];\n+      })\n+  );\n+  return {\n+    port: Number(entries.PORT),\n+    databaseUrl: entries.DATABASE_URL,\n+  };\n }\n"
+      }
+    },
+    {
+      "id": "feature-flag",
+      "prompt": "Only show the beta banner when the BETA environment variable is set to \"1\". Update `shouldShowBetaBanner()` in src/banner.js.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 329,
+        "costUsd": 0.106887,
+        "seconds": 11.709,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/banner.js b/src/banner.js\nindex 446600f..d99b6f0 100644\n--- a/src/banner.js\n+++ b/src/banner.js\n@@ -1,3 +1,3 @@\n export function shouldShowBetaBanner() {\n-  return true;\n+  return process.env.BETA === \"1\";\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 353,
+        "costUsd": 0.1119867,
+        "seconds": 12.315,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/banner.js b/src/banner.js\nindex 446600f..d99b6f0 100644\n--- a/src/banner.js\n+++ b/src/banner.js\n@@ -1,3 +1,3 @@\n export function shouldShowBetaBanner() {\n-  return true;\n+  return process.env.BETA === \"1\";\n }\n"
+      }
+    },
+    {
+      "id": "file-ext",
+      "prompt": "Implement `extensionOf(filePath)` in src/files.js. Return the file extension including the dot, e.g. \"docs/report.final.pdf\" -> \".pdf\". Return \"\" when there is none, including for dotfiles like \".gitignore\".",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 5,
+        "outputTokens": 412,
+        "costUsd": 0.1087311,
+        "seconds": 13.497,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/files.js b/src/files.js\nindex 56f0442..af2e5ea 100644\n--- a/src/files.js\n+++ b/src/files.js\n@@ -1,3 +1,6 @@\n export function extensionOf(filePath) {\n-  throw new Error('Not implemented');\n+  const base = filePath.split('/').pop();\n+  const dotIndex = base.lastIndexOf('.');\n+  if (dotIndex <= 0) return '';\n+  return base.slice(dotIndex);\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 5,
+        "outputTokens": 677,
+        "costUsd": 0.1319736,
+        "seconds": 21.588,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/files.js b/src/files.js\nindex 56f0442..5bafe7a 100644\n--- a/src/files.js\n+++ b/src/files.js\n@@ -1,3 +1,6 @@\n export function extensionOf(filePath) {\n-  throw new Error('Not implemented');\n+  const base = filePath.split('/').pop();\n+  const dot = base.lastIndexOf('.');\n+  if (dot <= 0) return '';\n+  return base.slice(dot);\n }\n"
+      }
+    },
+    {
+      "id": "format-date",
+      "prompt": "Implement `formatDate(date)` in src/format.js. Given a JavaScript Date, return it like `October 10, 2026` (full English month name, day without leading zero, four-digit year), using the date's UTC calendar day.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 7,
+        "outputTokens": 455,
+        "costUsd": 0.1097577,
+        "seconds": 14.369,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/format.js b/src/format.js\nindex 8bb73cd..dbaaf48 100644\n--- a/src/format.js\n+++ b/src/format.js\n@@ -1,3 +1,8 @@\n+const MONTHS = [\n+  'January', 'February', 'March', 'April', 'May', 'June',\n+  'July', 'August', 'September', 'October', 'November', 'December',\n+];\n+\n export function formatDate(date) {\n-  throw new Error('Not implemented');\n+  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 702,
+        "costUsd": 0.1324053,
+        "seconds": 21.997,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/format.js b/src/format.js\nindex 8bb73cd..7275d54 100644\n--- a/src/format.js\n+++ b/src/format.js\n@@ -1,3 +1,3 @@\n export function formatDate(date) {\n-  throw new Error('Not implemented');\n+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });\n }\n"
+      }
+    },
+    {
+      "id": "group-orders",
+      "prompt": "Implement `groupOrdersByStatus(orders)` in src/orders.js. Each order has a `status` string. Return an object mapping each status to the array of orders with that status, preserving input order.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 5,
+        "outputTokens": 386,
+        "costUsd": 0.10821090000000001,
+        "seconds": 13.302,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/orders.js b/src/orders.js\nindex e1f387f..4b611f6 100644\n--- a/src/orders.js\n+++ b/src/orders.js\n@@ -1,3 +1,6 @@\n export function groupOrdersByStatus(orders) {\n-  throw new Error('Not implemented');\n+  return orders.reduce((groups, order) => {\n+    (groups[order.status] ??= []).push(order);\n+    return groups;\n+  }, {});\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 559,
+        "costUsd": 0.12271860000000001,
+        "seconds": 20.118,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/orders.js b/src/orders.js\nindex e1f387f..e2ac659 100644\n--- a/src/orders.js\n+++ b/src/orders.js\n@@ -1,3 +1,3 @@\n export function groupOrdersByStatus(orders) {\n-  throw new Error('Not implemented');\n+  return Object.groupBy(orders, (order) => order.status);\n }\n"
+      }
+    },
+    {
+      "id": "hash-sha256",
+      "prompt": "Implement `fingerprint(text)` in src/fingerprint.js. Return the SHA-256 hash of the UTF-8 text as a lowercase hex string. It is used to detect duplicate uploads.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 0.3333333333333333,
+        "lines": 8,
+        "outputTokens": 662,
+        "costUsd": 0.1263558,
+        "seconds": 21.38,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/fingerprint.js b/src/fingerprint.js\nindex bf41d22..76e9b14 100644\n--- a/src/fingerprint.js\n+++ b/src/fingerprint.js\n@@ -1,3 +1,5 @@\n+import { createHash } from 'crypto';\n+\n export function fingerprint(text) {\n-  throw new Error('Not implemented');\n+  return createHash('sha256').update(text, 'utf8').digest('hex');\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 0,
+        "lines": 8,
+        "outputTokens": 617,
+        "costUsd": 0.123942,
+        "seconds": 20.639,
+        "newDependencies": [],
+        "rung": 4,
+        "patch": "diff --git a/src/fingerprint.js b/src/fingerprint.js\nindex bf41d22..6927694 100644\n--- a/src/fingerprint.js\n+++ b/src/fingerprint.js\n@@ -1,3 +1,7 @@\n-export function fingerprint(text) {\n-  throw new Error('Not implemented');\n+export async function fingerprint(text) {\n+  const bytes = new TextEncoder().encode(text);\n+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);\n+  return Array.from(new Uint8Array(hashBuffer))\n+    .map(b => b.toString(16).padStart(2, '0'))\n+    .join('');\n }\n"
+      }
+    },
+    {
+      "id": "installed-lib",
+      "prompt": "Implement `dueDate(invoiceDate)` in src/billing.js. Return a new Date that is 30 days after `invoiceDate`, formatted as an ISO calendar date string like \"2026-11-09\".",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 409,
+        "costUsd": 0.10869599999999999,
+        "seconds": 13.17,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/billing.js b/src/billing.js\nindex 2651130..830672e 100644\n--- a/src/billing.js\n+++ b/src/billing.js\n@@ -1,3 +1,5 @@\n export function dueDate(invoiceDate) {\n-  throw new Error('Not implemented');\n+  const due = new Date(invoiceDate);\n+  due.setDate(due.getDate() + 30);\n+  return due.toISOString().slice(0, 10);\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 427,
+        "costUsd": 0.1141119,
+        "seconds": 14.9,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/billing.js b/src/billing.js\nindex 2651130..99077f0 100644\n--- a/src/billing.js\n+++ b/src/billing.js\n@@ -1,3 +1,5 @@\n export function dueDate(invoiceDate) {\n-  throw new Error('Not implemented');\n+  const d = new Date(invoiceDate);\n+  d.setUTCDate(d.getUTCDate() + 30);\n+  return d.toISOString().slice(0, 10);\n }\n"
+      }
+    },
+    {
+      "id": "paginate",
+      "prompt": "Implement `paginate(items, page, pageSize)` in src/page.js. Pages start at 1. Return `{ items, page, totalPages }` where `items` is that page of results. Out-of-range pages return an empty items array.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 7,
+        "outputTokens": 483,
+        "costUsd": 0.1101543,
+        "seconds": 14.648,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/page.js b/src/page.js\nindex 8057537..94b2479 100644\n--- a/src/page.js\n+++ b/src/page.js\n@@ -1,3 +1,8 @@\n export function paginate(items, page, pageSize) {\n-  throw new Error('Not implemented');\n+  const totalPages = Math.ceil(items.length / pageSize);\n+  if (page < 1 || page > totalPages) {\n+    return { items: [], page, totalPages };\n+  }\n+  const start = (page - 1) * pageSize;\n+  return { items: items.slice(start, start + pageSize), page, totalPages };\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 7,
+        "outputTokens": 761,
+        "costUsd": 0.1336878,
+        "seconds": 22.78,
+        "newDependencies": [],
+        "rung": 7,
+        "patch": "diff --git a/src/page.js b/src/page.js\nindex 8057537..94b2479 100644\n--- a/src/page.js\n+++ b/src/page.js\n@@ -1,3 +1,8 @@\n export function paginate(items, page, pageSize) {\n-  throw new Error('Not implemented');\n+  const totalPages = Math.ceil(items.length / pageSize);\n+  if (page < 1 || page > totalPages) {\n+    return { items: [], page, totalPages };\n+  }\n+  const start = (page - 1) * pageSize;\n+  return { items: items.slice(start, start + pageSize), page, totalPages };\n }\n"
+      }
+    },
+    {
+      "id": "password-rules",
+      "prompt": "Implement `checkPassword(pw)` in src/password.js. Return an array of problems (empty if OK) using exactly these messages: \"at least 12 characters\", \"a letter\", \"a number\".",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 6,
+        "outputTokens": 445,
+        "costUsd": 0.1092969,
+        "seconds": 12.612,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/password.js b/src/password.js\nindex 954adfa..42d68e8 100644\n--- a/src/password.js\n+++ b/src/password.js\n@@ -1,3 +1,7 @@\n export function checkPassword(pw) {\n-  throw new Error('Not implemented');\n+  const problems = [];\n+  if (pw.length < 12) problems.push('at least 12 characters');\n+  if (!/[a-zA-Z]/.test(pw)) problems.push('a letter');\n+  if (!/[0-9]/.test(pw)) problems.push('a number');\n+  return problems;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 6,
+        "outputTokens": 611,
+        "costUsd": 0.12360089999999999,
+        "seconds": 20.577,
+        "newDependencies": [],
+        "rung": 7,
+        "patch": "diff --git a/src/password.js b/src/password.js\nindex 954adfa..42d68e8 100644\n--- a/src/password.js\n+++ b/src/password.js\n@@ -1,3 +1,7 @@\n export function checkPassword(pw) {\n-  throw new Error('Not implemented');\n+  const problems = [];\n+  if (pw.length < 12) problems.push('at least 12 characters');\n+  if (!/[a-zA-Z]/.test(pw)) problems.push('a letter');\n+  if (!/[0-9]/.test(pw)) problems.push('a number');\n+  return problems;\n }\n"
+      }
+    },
+    {
+      "id": "rate-limit",
+      "prompt": "Implement `allowRequest(userId, now)` in src/limit.js. Each user may make at most 5 requests in any rolling 60-second window. Return true and record the request if allowed, otherwise return false. `now` is a timestamp in milliseconds.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 12,
+        "outputTokens": 506,
+        "costUsd": 0.1106325,
+        "seconds": 13.943,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/limit.js b/src/limit.js\nindex 5d103dd..f908d9e 100644\n--- a/src/limit.js\n+++ b/src/limit.js\n@@ -1,3 +1,13 @@\n+const timestamps = new Map();\n+\n export function allowRequest(userId, now = Date.now()) {\n-  throw new Error('Not implemented');\n+  const windowStart = now - 60_000;\n+  const userTs = timestamps.get(userId) ?? [];\n+  const recent = userTs.filter(t => t > windowStart);\n+\n+  if (recent.length >= 5) return false;\n+\n+  recent.push(now);\n+  timestamps.set(userId, recent);\n+  return true;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 14,
+        "outputTokens": 923,
+        "costUsd": 0.1370289,
+        "seconds": 24.26,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/limit.js b/src/limit.js\nindex 5d103dd..3d9afad 100644\n--- a/src/limit.js\n+++ b/src/limit.js\n@@ -1,3 +1,15 @@\n+const WINDOW_MS = 60_000;\n+const MAX_REQUESTS = 5;\n+\n+const userTimestamps = new Map();\n+\n export function allowRequest(userId, now = Date.now()) {\n-  throw new Error('Not implemented');\n+  const windowStart = now - WINDOW_MS;\n+  const timestamps = (userTimestamps.get(userId) ?? []).filter(t => t > windowStart);\n+\n+  if (timestamps.length >= MAX_REQUESTS) return false;\n+\n+  timestamps.push(now);\n+  userTimestamps.set(userId, timestamps);\n+  return true;\n }\n"
+      }
+    },
+    {
+      "id": "relative-time",
+      "prompt": "Implement `daysAgo(n)` in src/time.js that returns English text for a whole number of days in the past: 0 -> \"today\", 1 -> \"yesterday\", 3 -> \"3 days ago\".",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 393,
+        "costUsd": 0.1084671,
+        "seconds": 12.244,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/time.js b/src/time.js\nindex 920f6fc..b7371b3 100644\n--- a/src/time.js\n+++ b/src/time.js\n@@ -1,3 +1,5 @@\n export function daysAgo(n) {\n-  throw new Error('Not implemented');\n+  if (n === 0) return 'today';\n+  if (n === 1) return 'yesterday';\n+  return `${n} days ago`;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 541,
+        "costUsd": 0.12258959999999999,
+        "seconds": 18.497,
+        "newDependencies": [],
+        "rung": 7,
+        "patch": "diff --git a/src/time.js b/src/time.js\nindex 920f6fc..b7371b3 100644\n--- a/src/time.js\n+++ b/src/time.js\n@@ -1,3 +1,5 @@\n export function daysAgo(n) {\n-  throw new Error('Not implemented');\n+  if (n === 0) return 'today';\n+  if (n === 1) return 'yesterday';\n+  return `${n} days ago`;\n }\n"
+      }
+    },
+    {
+      "id": "reuse-chunk",
+      "prompt": "Implement `sendInBatches(items, send)` in src/notify.js. Call `await send(batch)` once per batch of at most 10 items, in order.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 394,
+        "costUsd": 0.1084503,
+        "seconds": 12.208,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/notify.js b/src/notify.js\nindex 1edec16..2f7be33 100644\n--- a/src/notify.js\n+++ b/src/notify.js\n@@ -1,3 +1,5 @@\n export async function sendInBatches(items, send) {\n-  throw new Error('Not implemented');\n+  for (let i = 0; i < items.length; i += 10) {\n+    await send(items.slice(i, i + 10));\n+  }\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 431,
+        "costUsd": 0.11383739999999999,
+        "seconds": 15.295,
+        "newDependencies": [],
+        "rung": 7,
+        "patch": "diff --git a/src/notify.js b/src/notify.js\nindex 1edec16..2f7be33 100644\n--- a/src/notify.js\n+++ b/src/notify.js\n@@ -1,3 +1,5 @@\n export async function sendInBatches(items, send) {\n-  throw new Error('Not implemented');\n+  for (let i = 0; i < items.length; i += 10) {\n+    await send(items.slice(i, i + 10));\n+  }\n }\n"
+      }
+    },
+    {
+      "id": "reuse-csv",
+      "prompt": "Implement `loadUsers(text)` in src/users.js. It receives CSV text with a header row `name,email,age` and must return an array of `{ name, email, age }` objects where `age` is a number. Quoted fields may contain commas.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 746,
+        "costUsd": 0.1346259,
+        "seconds": 21.98,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/users.js b/src/users.js\nindex 205566b..fee0ced 100644\n--- a/src/users.js\n+++ b/src/users.js\n@@ -1,3 +1,5 @@\n+import { parseCsv } from './csv.js';\n+\n export function loadUsers(text) {\n-  throw new Error('Not implemented');\n+  return parseCsv(text).map(({ name, email, age }) => ({ name, email, age: Number(age) }));\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 768,
+        "costUsd": 0.1390935,
+        "seconds": 20.109,
+        "newDependencies": [],
+        "rung": 2,
+        "patch": "diff --git a/src/users.js b/src/users.js\nindex 205566b..fee0ced 100644\n--- a/src/users.js\n+++ b/src/users.js\n@@ -1,3 +1,5 @@\n+import { parseCsv } from './csv.js';\n+\n export function loadUsers(text) {\n-  throw new Error('Not implemented');\n+  return parseCsv(text).map(({ name, email, age }) => ({ name, email, age: Number(age) }));\n }\n"
+      }
+    },
+    {
+      "id": "reuse-money",
+      "prompt": "Implement `invoiceLine(order)` in src/invoice.js. `order.totalCents` is an integer number of cents. Return a string like `Total: $1,234.50`.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 6,
+        "outputTokens": 410,
+        "costUsd": 0.10860449999999999,
+        "seconds": 13.158,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/invoice.js b/src/invoice.js\nindex aa06340..f304cbc 100644\n--- a/src/invoice.js\n+++ b/src/invoice.js\n@@ -1,3 +1,7 @@\n export function invoiceLine(order) {\n-  throw new Error('Not implemented');\n+  const dollars = (order.totalCents / 100).toLocaleString('en-US', {\n+    minimumFractionDigits: 2,\n+    maximumFractionDigits: 2,\n+  });\n+  return `Total: $${dollars}`;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 3,
+        "outputTokens": 415,
+        "costUsd": 0.1132914,
+        "seconds": 15.21,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/invoice.js b/src/invoice.js\nindex aa06340..d79a8b2 100644\n--- a/src/invoice.js\n+++ b/src/invoice.js\n@@ -1,3 +1,4 @@\n export function invoiceLine(order) {\n-  throw new Error('Not implemented');\n+  const formatted = (order.totalCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });\n+  return `Total: ${formatted}`;\n }\n"
+      }
+    },
+    {
+      "id": "reuse-retry",
+      "prompt": "Make `fetchProfile(id, request)` in src/profile.js retry up to 3 attempts in total when `request` throws, then rethrow the last error.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 10,
+        "outputTokens": 432,
+        "costUsd": 0.1092294,
+        "seconds": 12.345,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/profile.js b/src/profile.js\nindex 39d4882..6a98294 100644\n--- a/src/profile.js\n+++ b/src/profile.js\n@@ -1,4 +1,12 @@\n // request(url) -> Promise<object>\n export async function fetchProfile(id, request) {\n-  return request(`/api/profiles/${id}`);\n+  let lastError;\n+  for (let attempt = 0; attempt < 3; attempt++) {\n+    try {\n+      return await request(`/api/profiles/${id}`);\n+    } catch (err) {\n+      lastError = err;\n+    }\n+  }\n+  throw lastError;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 10,
+        "outputTokens": 463,
+        "costUsd": 0.11459399999999999,
+        "seconds": 13.478,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/profile.js b/src/profile.js\nindex 39d4882..6a98294 100644\n--- a/src/profile.js\n+++ b/src/profile.js\n@@ -1,4 +1,12 @@\n // request(url) -> Promise<object>\n export async function fetchProfile(id, request) {\n-  return request(`/api/profiles/${id}`);\n+  let lastError;\n+  for (let attempt = 0; attempt < 3; attempt++) {\n+    try {\n+      return await request(`/api/profiles/${id}`);\n+    } catch (err) {\n+      lastError = err;\n+    }\n+  }\n+  throw lastError;\n }\n"
+      }
+    },
+    {
+      "id": "sort-names",
+      "prompt": "Implement `sortNames(names)` in src/names.js. Return a new array sorted the way a person would expect: case-insensitive, and accented letters sort next to their base letter (so \"Émile\" comes before \"Zoe\").",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 436,
+        "costUsd": 0.1090941,
+        "seconds": 13.24,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/names.js b/src/names.js\nindex 42715de..ffa9113 100644\n--- a/src/names.js\n+++ b/src/names.js\n@@ -1,3 +1,5 @@\n export function sortNames(names) {\n-  throw new Error('Not implemented');\n+  return [...names].sort((a, b) =>\n+    a.localeCompare(b, undefined, { sensitivity: 'base' })\n+  );\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 762,
+        "costUsd": 0.1274403,
+        "seconds": 20.766,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/names.js b/src/names.js\nindex 42715de..d31e046 100644\n--- a/src/names.js\n+++ b/src/names.js\n@@ -1,3 +1,5 @@\n+const collator = new Intl.Collator(undefined, { sensitivity: 'base', usage: 'sort' });\n+\n export function sortNames(names) {\n-  throw new Error('Not implemented');\n+  return [...names].sort(collator.compare);\n }\n"
+      }
+    },
+    {
+      "id": "unique-id",
+      "prompt": "Implement `createId()` in src/id.js. It must return a random RFC 4122 version 4 UUID string, suitable for use as a database primary key.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 4,
+        "outputTokens": 520,
+        "costUsd": 0.11054040000000001,
+        "seconds": 19.894,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/id.js b/src/id.js\nindex 1c571ee..ff4b3d3 100644\n--- a/src/id.js\n+++ b/src/id.js\n@@ -1,3 +1,5 @@\n+import { randomUUID } from 'crypto';\n+\n export function createId() {\n-  throw new Error('Not implemented');\n+  return randomUUID();\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 382,
+        "costUsd": 0.11260260000000001,
+        "seconds": 14.344,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/id.js b/src/id.js\nindex 1c571ee..1f692fe 100644\n--- a/src/id.js\n+++ b/src/id.js\n@@ -1,3 +1,3 @@\n export function createId() {\n-  throw new Error('Not implemented');\n+  return crypto.randomUUID();\n }\n"
+      }
+    },
+    {
+      "id": "url-params",
+      "prompt": "Implement `parseQuery(search)` in src/query.js. Given a query string like `?q=lean%20token&page=2`, return a plain object `{ q: \"lean token\", page: \"2\" }`. The leading `?` is optional. For repeated keys, keep the last value.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 0.3333333333333333,
+        "lines": 10,
+        "outputTokens": 657,
+        "costUsd": 0.12022050000000001,
+        "seconds": 23.253,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/query.js b/src/query.js\nindex 6dd8cf0..054256b 100644\n--- a/src/query.js\n+++ b/src/query.js\n@@ -1,3 +1,7 @@\n export function parseQuery(search) {\n-  throw new Error('Not implemented');\n+  const qs = search.startsWith('?') ? search.slice(1) : search;\n+  if (!qs) return {};\n+  return Object.fromEntries(\n+    new URLSearchParams(qs)\n+  );\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 2,
+        "outputTokens": 546,
+        "costUsd": 0.12304799999999999,
+        "seconds": 21.606,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/query.js b/src/query.js\nindex 6dd8cf0..138c55a 100644\n--- a/src/query.js\n+++ b/src/query.js\n@@ -1,3 +1,3 @@\n export function parseQuery(search) {\n-  throw new Error('Not implemented');\n+  return Object.fromEntries(new URLSearchParams(search));\n }\n"
+      }
+    }
+  ]
+}

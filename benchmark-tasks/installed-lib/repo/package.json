@@ -1,0 +1,9 @@
+{
+  "name": "installed-lib",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@acme/dates": "^2.1.0"
+  }
+}

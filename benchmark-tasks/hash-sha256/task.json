@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `fingerprint(text)` in src/fingerprint.js. Return the SHA-256 hash of the UTF-8 text as a lowercase hex string. It is used to detect duplicate uploads."
+}

@@ -1,0 +1,3 @@
+{
+  "prompt": "Only show the beta banner when the BETA environment variable is set to \"1\". Update `shouldShowBetaBanner()` in src/banner.js."
+}

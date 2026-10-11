@@ -1,0 +1,3 @@
+{
+  "prompt": "Make sure `listMembers` in src/members.js returns members sorted alphabetically by name."
+}

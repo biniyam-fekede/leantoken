@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `allowRequest(userId, now)` in src/limit.js. Each user may make at most 5 requests in any rolling 60-second window. Return true and record the request if allowed, otherwise return false. `now` is a timestamp in milliseconds."
+}

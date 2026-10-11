@@ -1,0 +1,3 @@
+{
+  "prompt": "Add a birthday field to the signup form in public/signup.html so users can pick their date of birth. Its form field name must be `birthday`."
+}

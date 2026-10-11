@@ -1,0 +1,3 @@
+{
+  "prompt": "Make `fetchProfile(id, request)` in src/profile.js retry up to 3 attempts in total when `request` throws, then rethrow the last error."
+}

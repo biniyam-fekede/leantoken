@@ -1,4 +1,5 @@
-export type Variant = 'baseline' | 'leantoken';
+/** 'baseline', 'leantoken', or an ablation like 'no-step-3'. */
+export type Variant = string;
 
 export interface RunRecord {
   task: string;
@@ -16,6 +17,7 @@ export interface RunRecord {
   testsPassed: number;
   testsTotal: number;
   rung: number | null;
+  patch?: string;
   error?: string;
 }
 
@@ -86,6 +88,18 @@ export function change(base: number, lean: number): number {
   return base === 0 ? (lean === 0 ? 0 : Infinity) : ((lean - base) / base) * 100;
 }
 
+type Metric = 'lines' | 'outputTokens' | 'costUsd' | 'seconds';
+
+/**
+ * Median over tasks of each task's percent change from variant `a` to `b`.
+ * Tasks differ wildly in size, so this is a fairer headline than a pooled median.
+ */
+export function medianTaskChange(records: RunRecord[], a: Variant, b: Variant, metric: Metric): number {
+  const tasks = [...new Set(records.map((r) => r.task))];
+  const of = (t: string, v: Variant) => stats(records.filter((r) => r.task === t && r.variant === v))[metric];
+  return median(tasks.map((t) => change(of(t, a), of(t, b))).filter(Number.isFinite));
+}
+
 const fmt = (n: number, digits = 0) => (Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: digits }) : '–');
 const pct = (n: number) => (Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n.toFixed(0)}%` : '–');
 
@@ -95,14 +109,14 @@ export function formatReport(records: RunRecord[]): string {
   const lines: string[] = ['LeanToken Benchmark', '─'.repeat(64)];
   const rate = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(0)}%` : '–');
 
-  const section = (title: string, b: Stats, l: Stats) => {
+  const section = (title: string, b: Stats, l: Stats, delta = (m: Metric) => change(b[m], l[m])) => {
     lines.push(`${title}  (runs: ${b.runs} baseline / ${l.runs} leantoken)`);
     const rows = [
       ['', 'Baseline', 'LeanToken', 'Change'],
-      ['Lines changed', fmt(b.lines), fmt(l.lines), pct(change(b.lines, l.lines))],
-      ['Output tokens', fmt(b.outputTokens), fmt(l.outputTokens), pct(change(b.outputTokens, l.outputTokens))],
-      ['Cost (USD)', fmt(b.costUsd, 4), fmt(l.costUsd, 4), pct(change(b.costUsd, l.costUsd))],
-      ['Time (s)', fmt(b.seconds, 1), fmt(l.seconds, 1), pct(change(b.seconds, l.seconds))],
+      ['Lines changed', fmt(b.lines), fmt(l.lines), pct(delta('lines'))],
+      ['Output tokens', fmt(b.outputTokens), fmt(l.outputTokens), pct(delta('outputTokens'))],
+      ['Cost (USD)', fmt(b.costUsd, 4), fmt(l.costUsd, 4), pct(delta('costUsd'))],
+      ['Time (s)', fmt(b.seconds, 1), fmt(l.seconds, 1), pct(delta('seconds'))],
       ['Tests all pass', rate(b.passRate), rate(l.passRate), ''],
       ['New deps (total)', fmt(b.newDeps), fmt(l.newDeps), ''],
     ];
@@ -111,7 +125,21 @@ export function formatReport(records: RunRecord[]): string {
   };
 
   for (const t of tasks) section(`Task: ${t}`, stats(pick(t, 'baseline')), stats(pick(t, 'leantoken')));
-  if (tasks.length > 1) section('All tasks (medians)', stats(pick(null, 'baseline')), stats(pick(null, 'leantoken')));
+  if (tasks.length > 1) {
+    section('All tasks (pooled medians; Change = median of per-task changes)', stats(pick(null, 'baseline')), stats(pick(null, 'leantoken')),
+      (m) => medianTaskChange(records, 'baseline', 'leantoken', m));
+  }
+
+  const variants = [...new Set(records.map((r) => r.variant))].filter((v) => v !== 'baseline').sort();
+  if (variants.length > 1) {
+    lines.push('Variants vs baseline (median of per-task changes)');
+    lines.push(`  ${'Variant'.padEnd(14)}${'Lines'.padStart(9)}${'Out tok'.padStart(10)}${'Cost'.padStart(9)}${'Time'.padStart(9)}${'All pass'.padStart(10)}`);
+    for (const v of variants) {
+      const c = (m: Metric) => pct(medianTaskChange(records, 'baseline', v, m));
+      lines.push(`  ${v.padEnd(14)}${c('lines').padStart(9)}${c('outputTokens').padStart(10)}${c('costUsd').padStart(9)}${c('seconds').padStart(9)}${rate(stats(pick(null, v)).passRate).padStart(10)}`);
+    }
+    lines.push('');
+  }
 
   const rungs = pick(null, 'leantoken').map((r) => r.rung);
   if (rungs.length) {
