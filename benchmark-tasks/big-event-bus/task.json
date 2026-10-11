@@ -1,0 +1,3 @@
+{
+  "prompt": "Other modules need to react when settings change. In src/store.js, let callers subscribe to changes: `store.on(\"change\", fn)`, `store.off(\"change\", fn)`, and `store.once(\"change\", fn)` (fires only once). Every `set(key, value)` must notify listeners with `{ key, value }`. Keep `get` and `set` working as they do now."
+}

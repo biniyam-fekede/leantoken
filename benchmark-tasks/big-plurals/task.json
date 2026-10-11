@@ -1,0 +1,3 @@
+{
+  "prompt": "Implement `cartSummary(count, locale)` in src/cart.js for the cart badge, using the words in src/messages.js. English: 0 -> \"No items\", 1 -> \"1 item\", 5 -> \"5 items\". Polish needs its real plural rules: 1 -> \"1 przedmiot\", 2-4 and 22-24 -> \"2 przedmioty\", 5-21 and 25+ -> \"5 przedmiotów\", 0 -> \"Brak przedmiotów\"."
+}

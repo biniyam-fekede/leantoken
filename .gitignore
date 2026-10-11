@@ -4,3 +4,4 @@ results/
 .claude/
 !benchmark-tasks/*/repo/node_modules/
 substack-draft.md
+substack-short.md

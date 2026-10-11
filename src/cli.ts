@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { appendRecord, DEFAULT_TASKS_DIR, loadTasks, readRecords, rulesFor, runTask } from './bench.js';
+import { appendRecord, DEFAULT_TASKS_DIR, isLimitError, loadTasks, readRecords, rulesFor, runTask } from './bench.js';
 import { exportSite } from './export.js';
 import { formatReport, type Variant } from './metrics.js';
 import { install, rulesText, rulesVersion, uninstall } from './rules.js';
@@ -24,9 +24,10 @@ Bench options:
   --out FILE           JSONL results file (default: results/runs.jsonl)
   --tasks-dir DIR      Task directory (default: bundled benchmark-tasks)
   --concurrency N      Runs in parallel (default: 1)
+  --skip-done          Skip runs already recorded in --out (resume after a limit)
   --keep               Keep the temp checkouts for inspection
 
-Variants: baseline, leantoken, or no-step-1 … no-step-7 (the ruleset with that checklist step removed).
+Variants: baseline, leantoken, lite (short checklist), or no-step-1 … no-step-7 (the ruleset with that checklist step removed).
 
   leantoken export    [--out FILE] [--site docs/results.json]   Write results for the project page`;
 
@@ -43,6 +44,7 @@ const { values, positionals } = parseArgs({
     out: { type: 'string', default: 'results/runs.jsonl' },
     keep: { type: 'boolean', default: false },
     concurrency: { type: 'string', default: '1' },
+    'skip-done': { type: 'boolean', default: false },
     site: { type: 'string', default: 'docs/results.json' },
     help: { type: 'boolean', short: 'h' },
   },
@@ -72,19 +74,29 @@ switch (values.help ? 'help' : positionals[0]) {
     const opts = { model: values.model, timeoutMs: Number(values.timeout) * 1000, keep: values.keep };
     variants.forEach(rulesFor); // fail fast on a typo before spending any runs
     // Interleave variants within each repetition so drift (rate limits, model updates) hits all of them equally.
-    const jobs = tasks.flatMap((task) => Array.from({ length: runs }, (_, i) => variants.map((variant) => ({ task, variant, i: i + 1 }))).flat());
+    const already = new Map<string, number>();
+    if (values['skip-done']) for (const r of readRecords(values.out)) already.set(`${r.task}|${r.variant}`, (already.get(`${r.task}|${r.variant}`) ?? 0) + 1);
+    const jobs = tasks
+      .flatMap((task) => Array.from({ length: runs }, (_, i) => variants.map((variant) => ({ task, variant, i: i + 1 }))).flat())
+      .filter((j) => j.i > (already.get(`${j.task.id}|${j.variant}`) ?? 0));
     let next = 0;
     let done = 0;
+    let limited = '';
     const worker = async () => {
-      while (next < jobs.length) {
+      while (next < jobs.length && !limited) {
         const { task, variant, i } = jobs[next++];
         const r = await runTask(task, variant, opts);
+        if (isLimitError(r)) {
+          limited ||= r.error!.split('\n')[0];
+          continue; // not recorded: the account was limited, the agent did nothing wrong
+        }
         appendRecord(values.out, r);
         const result = r.error ? `error: ${r.error.split('\n')[0]}` : `${r.testsPassed}/${r.testsTotal} tests, ${r.linesAdded + r.linesRemoved} lines, ${(r.durationMs / 1000).toFixed(1)}s`;
         console.log(`[${++done}/${jobs.length}] ${task.id} [${variant}] run ${i}: ${result}`);
       }
     };
     await Promise.all(Array.from({ length: Math.max(1, Number(values.concurrency)) }, worker));
+    if (limited) console.log(`\nStopped early: ${limited}\nFinished ${done} of ${jobs.length} runs. Re-run the same command later; add --skip-done to skip finished runs.`);
     console.log(`\n${formatReport(readRecords(values.out))}`);
     break;
   }

@@ -1,0 +1,3 @@
+{
+  "prompt": "Our server CLI needs real argument parsing. Implement `parseCliArgs(argv)` in src/cli.js, where `argv` is the argument list without the node and script paths. Support `--port <number>` (default 3000), `--host <string>` (default \"localhost\"), `--verbose` or `-v` (boolean, default false), and any number of positional file paths. Return `{ port, host, verbose, files }` with `port` as a number. Throw an Error for unknown options. src/main.js already calls it."
+}

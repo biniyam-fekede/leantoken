@@ -1,0 +1,3 @@
+{
+  "prompt": "Add a `DELETE /todos/:id` endpoint to the todo API. Respond 204 with no body when the todo existed and was deleted, and 404 with `{ \"error\": \"Not found\" }` when it did not exist."
+}

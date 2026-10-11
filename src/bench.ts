@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { newDependencies, parseNodeTest, parseNumstat, parseRung, type RunRecord, type Variant } from './metrics.js';
-import { rulesText, rulesVersion, rulesWithout } from './rules.js';
+import { LITE_RULES_PATH, rulesText, rulesVersion, rulesWithout } from './rules.js';
 
 export const DEFAULT_TASKS_DIR = fileURLToPath(new URL('../benchmark-tasks', import.meta.url));
 
@@ -49,9 +49,10 @@ const readManifest = (dir: string) => {
 export function rulesFor(variant: Variant): string | null {
   if (variant === 'baseline') return null;
   if (variant === 'leantoken') return rulesText();
+  if (variant === 'lite') return readFileSync(LITE_RULES_PATH, 'utf8');
   const step = variant.match(/^no-step-([1-7])$/)?.[1];
   if (step) return rulesWithout(Number(step));
-  throw new Error(`Unknown variant "${variant}". Use baseline, leantoken, or no-step-1 … no-step-7.`);
+  throw new Error(`Unknown variant "${variant}". Use baseline, leantoken, lite, or no-step-1 … no-step-7.`);
 }
 
 /** Run one task once under one variant in a throwaway git checkout. */
@@ -108,6 +109,11 @@ export async function runTask(task: Task, variant: Variant, opts: BenchOptions):
     if (!opts.keep) rmSync(work, { recursive: true, force: true });
   }
   return record;
+}
+
+/** True when a run failed because the account hit a usage or rate limit, not because of the agent. */
+export function isLimitError(r: RunRecord): boolean {
+  return !!r.error && /session limit|usage limit|rate limit|hit your limit|overloaded/i.test(r.error);
 }
 
 export function appendRecord(file: string, record: RunRecord): void {

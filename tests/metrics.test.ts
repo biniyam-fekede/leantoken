@@ -21,6 +21,7 @@ describe('newDependencies', () => {
 describe('parsers', () => {
   it('reads node --test TAP totals', () => {
     expect(parseNodeTest('# tests 3\n# pass 2\n# fail 1\n')).toEqual({ passed: 2, total: 3 });
+    expect(parseNodeTest('# pass 0\n# fail 0\n# cancelled 2\n')).toEqual({ passed: 0, total: 2 });
   });
   it('reads the decision rung', () => {
     expect(parseRung('Done.\nLeanToken: rung=3 used Intl.DateTimeFormat')).toBe(3);

@@ -1,0 +1,3 @@
+{
+  "prompt": "Requests to the pricing service sometimes hang forever. Update `getJSON(url, options)` in src/api.js so a request gives up after `options.timeoutMs` milliseconds (default 5000). When it times out it must reject with an error whose `name` is \"TimeoutError\". `options.fetchImpl` defaults to the global fetch and is used for testing; pass it whatever it needs to cancel the request."
+}

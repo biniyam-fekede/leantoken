@@ -45,7 +45,8 @@ export function newDependencies(before: Manifest, after: Manifest): string[] {
 export function parseNodeTest(out: string): { passed: number; total: number } {
   const passed = Number(out.match(/^# pass (\d+)/m)?.[1] ?? 0);
   const failed = Number(out.match(/^# fail (\d+)/m)?.[1] ?? 0);
-  return { passed, total: passed + failed };
+  const cancelled = Number(out.match(/^# cancelled (\d+)/m)?.[1] ?? 0);
+  return { passed, total: passed + failed + cancelled };
 }
 
 export function parseRung(text: string): number | null {

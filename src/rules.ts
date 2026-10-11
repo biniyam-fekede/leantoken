@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 export const RULES_PATH = new URL('../rules/leantoken.md', import.meta.url);
+export const LITE_RULES_PATH = new URL('../rules/leantoken-lite.md', import.meta.url);
 
 const BEGIN = '<!-- leantoken:begin -->';
 const END = '<!-- leantoken:end -->';
