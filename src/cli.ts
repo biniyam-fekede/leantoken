@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { appendRecord, DEFAULT_TASKS_DIR, isLimitError, loadTasks, readRecords, rulesFor, runTask } from './bench.js';
+import { appendRecord, DEFAULT_TASKS_DIR, isLimitError, loadTasks, readRecords, rescore, rulesFor, runTask } from './bench.js';
+import { writeFileSync } from 'node:fs';
 import { exportSite } from './export.js';
 import { formatReport, type Variant } from './metrics.js';
 import { install, rulesText, rulesVersion, uninstall } from './rules.js';
@@ -14,6 +15,7 @@ Usage:
   leantoken tasks     [--tasks-dir DIR]    List benchmark tasks
   leantoken bench     [options]            Run paired baseline vs leantoken benchmarks
   leantoken report    [--out FILE]         Summarize recorded runs
+  leantoken rescore   --tasks a,b          Re-run hidden tests on saved diffs (after fixing a test)
 
 Bench options:
   --tasks a,b          Only run these task ids (default: all)
@@ -27,7 +29,7 @@ Bench options:
   --skip-done          Skip runs already recorded in --out (resume after a limit)
   --keep               Keep the temp checkouts for inspection
 
-Variants: baseline, leantoken, lite (short checklist), or no-step-1 … no-step-7 (the ruleset with that checklist step removed).
+Variants: baseline, leantoken, lite (short checklist), no-examples (full checklist without example APIs), or no-step-1 … no-step-7 (the ruleset with that checklist step removed).
 
   leantoken export    [--out FILE] [--site docs/results.json]   Write results for the project page`;
 
@@ -98,6 +100,23 @@ switch (values.help ? 'help' : positionals[0]) {
     await Promise.all(Array.from({ length: Math.max(1, Number(values.concurrency)) }, worker));
     if (limited) console.log(`\nStopped early: ${limited}\nFinished ${done} of ${jobs.length} runs. Re-run the same command later; add --skip-done to skip finished runs.`);
     console.log(`\n${formatReport(readRecords(values.out))}`);
+    break;
+  }
+  case 'rescore': {
+    const only = list(values.tasks);
+    if (!only?.length) throw new Error('Pass --tasks a,b to choose which tasks to re-test.');
+    const tasks = new Map(loadTasks(values['tasks-dir'], only).map((t) => [t.id, t]));
+    const records = readRecords(values.out);
+    let changed = 0;
+    for (const [i, r] of records.entries()) {
+      const task = tasks.get(r.task);
+      if (!task || r.error) continue;
+      const next = await rescore(task, r);
+      if (next.testsPassed !== r.testsPassed || next.testsTotal !== r.testsTotal) changed++;
+      records[i] = next;
+    }
+    writeFileSync(values.out, records.map((r) => JSON.stringify(r)).join('\n') + '\n');
+    console.log(`Re-tested ${only.join(', ')}: ${changed} run(s) changed result.`);
     break;
   }
   case 'export': {

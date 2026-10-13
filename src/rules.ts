@@ -15,6 +15,11 @@ export function rulesWithout(step: number, text = rulesText()): string {
   return text.split('\n').filter((line) => !line.startsWith(`${step}. **`)).join('\n');
 }
 
+/** The full ruleset without its example APIs, to test whether the examples (not the checklist) drive the effect. */
+export function rulesWithoutExamples(text = rulesText()): string {
+  return text.replace(/ \(e\.g\.[^)]*\)/g, '');
+}
+
 export function rulesVersion(text = rulesText()): string {
   return text.match(/leantoken-rules v([\d.]+)/)?.[1] ?? 'unknown';
 }

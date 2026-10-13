@@ -222,8 +222,8 @@
       <p class="kicker" id="results-kicker"></p>
       <div class="tiles" id="tiles"></div>
       <div class="ablation">
-        <h3>Which checklist steps matter?</h3>
-        <p>We removed one step at a time and re-ran every task. Each bar shows the change against an agent with no LeanToken at all. Bars to the left mean less.</p>
+        <h3>What makes it work?</h3>
+        <p>We tried a shorter checklist, the full one without its example APIs, and the full one with each step removed in turn. Each bar is the change against an agent with no checklist. Bars to the left mean less. Step-removal rows ran each task once, so they are noisier.</p>
         <div class="bars" id="bars"></div>
       </div>
       <a class="readmore" href="writeup.html">Read the full write-up →</a>
@@ -396,15 +396,16 @@ async function render() {
 
 function renderResults() {
   const s = data.summary;
-  const lean = s.variants.find((v) => v.variant === 'leantoken');
+  const find = (v) => s.variants.find((x) => x.variant === v);
+  const lean = find('leantoken');
   const runsPer = Math.round(data.tasks.reduce((n, t) => n + t.baseline.runs, 0) / data.tasks.length);
+  const big = data.tasks.filter((t) => t.id.startsWith('big-')).length;
   const models = data.models.map((m) => 'Claude ' + m[0].toUpperCase() + m.slice(1)).join(', ');
-  $('results-kicker').textContent = `${s.tasks} coding tasks, each run ${runsPer} ${runsPer === 1 ? 'time' : 'times'} with and without LeanToken on ${models}. Hidden tests check every result. Percentages are the median change per task.`;
+  $('results-kicker').textContent = `${s.tasks} coding tasks (${s.tasks - big} small, ${big} spanning several files), each run ${runsPer} times with and without LeanToken on ${models}, ${s.runs} runs in all. Hidden tests check every result. Most tasks came out the same either way; the savings come from the ones where something built in could do the job.`;
 
-  const tile = (value, label, goodWhenNegative = true) => {
+  const tile = (value, label) => {
     const d = el('div', 'tile');
-    const b = el('b', goodWhenNegative ? (value <= 0 ? 'good' : 'bad') : '', signed(value));
-    d.append(b, el('span', '', label));
+    d.append(el('b', value <= 0 ? 'good' : 'bad', signed(value)), el('span', '', label));
     return d;
   };
   const plain = (value, label) => {
@@ -414,17 +415,18 @@ function renderResults() {
   };
   const deps = (side) => data.tasks.reduce((n, t) => n + t[side].newDependencies.length, 0);
   $('tiles').replaceChildren(
-    tile(lean.lines, 'lines of code changed'),
-    tile(lean.outputTokens, 'output tokens'),
+    tile(lean.totalLines, 'total code written'),
+    plain(`${pct(s.baselinePassRate)} → ${pct(lean.passRate)}`, 'tests passed, off → on'),
     tile(lean.costUsd, 'cost per task'),
+    tile(lean.outputTokens, 'output tokens per task'),
     tile(lean.seconds, 'time per task'),
-    plain(`${pct(s.baselinePassRate)} / ${pct(lean.passRate)}`, 'tests passed, off / on'),
     plain(`${deps('baseline')} / ${deps('leantoken')}`, 'new packages added, off / on'),
   );
 
-  const rows = s.variants.filter((v) => v.variant !== 'leantoken').sort((a, b) => a.variant.localeCompare(b.variant));
-  const all = [lean, ...rows];
-  const max = Math.max(10, ...all.flatMap((v) => [Math.abs(v.lines), Math.abs(v.costUsd)]).filter(Number.isFinite));
+  const label = (v) => ({ leantoken: 'Full checklist', 'no-examples': 'Full, no example APIs', lite: 'Short checklist' })[v] ?? `Without step ${v.slice(-1)} (${SHORT[Number(v.slice(-1)) - 1]})`;
+  const order = ['leantoken', 'no-examples', 'lite', ...s.variants.map((v) => v.variant).filter((v) => v.startsWith('no-step')).sort()];
+  const all = order.map(find).filter(Boolean);
+  const max = Math.max(10, ...all.flatMap((v) => [Math.abs(v.totalLines), Math.abs(v.costUsd)]).filter(Number.isFinite));
   const bar = (value) => {
     const box = el('div', 'bar');
     if (!Number.isFinite(value)) return box;
@@ -433,20 +435,19 @@ function renderResults() {
     i.style.width = w + '%';
     i.style.left = value < 0 ? 50 - w + '%' : '50%';
     i.style.background = value <= 0 ? 'var(--keep)' : 'var(--cut)';
-    const label = el('em', '', signed(value));
-    if (value < 0) label.style.right = 50 + w + 1 + '%'; else label.style.left = 50 + w + 1 + '%';
-    box.append(i, label);
+    const text = el('em', '', signed(value));
+    if (value < 0) text.style.right = 50 + w + 1 + '%'; else text.style.left = 50 + w + 1 + '%';
+    box.append(i, text);
     return box;
   };
   const head = el('div', 'bar-row head');
-  head.append(el('span', '', 'Checklist'), el('span', '', 'Code changed'), el('span', '', 'Cost'));
+  head.append(el('span', '', 'Version'), el('span', '', 'Total code'), el('span', '', 'Cost per task'));
   $('bars').replaceChildren(head, ...all.map((v) => {
     const row = el('div', 'bar-row' + (v.variant === 'leantoken' ? ' full' : ''));
-    const n = Number(v.variant.match(/\d/)?.[0]);
-    row.append(el('span', '', v.variant === 'leantoken' ? 'Full checklist' : `Without step ${n} (${SHORT[n - 1]})`), bar(v.lines), bar(v.costUsd));
+    row.append(el('span', '', label(v.variant)), bar(v.totalLines), bar(v.costUsd));
     return row;
   }));
-  if (!rows.length) $('bars').parentElement.hidden = true;
+  $('bars').parentElement.hidden = all.length < 2;
 }
 
 function setup() {

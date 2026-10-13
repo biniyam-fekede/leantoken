@@ -56,3 +56,33 @@ describe('ablation', () => {
     expect(() => rulesFor('no-step-9')).toThrow(/Unknown variant/);
   });
 });
+
+describe('no-examples variant', () => {
+  it('strips every example API but keeps all seven steps', async () => {
+    const { rulesWithoutExamples } = await import('../src/rules.js');
+    const text = rulesWithoutExamples();
+    for (const api of ['structuredClone', 'crypto.randomUUID', 'Object.groupBy', 'Intl', 'input type="date"']) expect(text).not.toContain(api);
+    for (let n = 1; n <= 7; n++) expect(text).toContain(`${n}. **`);
+  });
+});
+
+describe('rescore', () => {
+  it('applies a saved diff and re-runs the hidden tests', async () => {
+    const { rescore } = await import('../src/bench.js');
+    const task = loadTasks(undefined, ['dedupe'])[0];
+    const patch = [
+      'diff --git a/src/tags.js b/src/tags.js',
+      '--- a/src/tags.js',
+      '+++ b/src/tags.js',
+      '@@ -1,3 +1,3 @@',
+      ' export function uniqueTags(tags) {',
+      "-  throw new Error('Not implemented');",
+      '+  return [...new Set(tags)];',
+      ' }',
+      '',
+    ].join('\n');
+    const base = { task: 'dedupe', variant: 'baseline', model: 'm', rulesVersion: 'none', timestamp: '', durationMs: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, linesAdded: 1, linesRemoved: 1, newDependencies: [], testsPassed: 0, testsTotal: 0, rung: null };
+    expect(await rescore(task, { ...base, patch })).toMatchObject({ testsPassed: 2, testsTotal: 2 });
+    expect(await rescore(task, { ...base, patch: '' })).toMatchObject({ testsPassed: 0, testsTotal: 2 });
+  });
+});

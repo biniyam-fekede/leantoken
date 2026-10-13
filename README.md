@@ -58,6 +58,7 @@ leantoken bench --runs 3 --model sonnet --concurrency 4
 leantoken bench --tasks format-date,reuse-csv --runs 5
 leantoken bench --variants no-step-3 --runs 1      # ablation: the ruleset without step 3
 leantoken report                                   # re-print the summary
+leantoken rescore --tasks a,b                      # re-run hidden tests on saved diffs after fixing a test
 leantoken export                                   # write docs/results.json for the project page
 ```
 
@@ -75,7 +76,7 @@ Variants are interleaved within each repetition, so drift such as rate limits or
 
 ### Bundled tasks
 
-28 small tasks, each aimed at one checklist step. Every task's hidden tests were checked to fail on the starting code and pass with a minimal correct solution.
+28 small tasks, each aimed at one checklist step, plus 7 larger multi-file tasks (`big-*`). Every task's hidden tests were checked to fail on the starting code and pass with a minimal correct solution.
 
 | Step | Tasks |
 |------|-------|
@@ -91,23 +92,36 @@ Each task is `benchmark-tasks/<id>/{task.json, repo/, test/}`. To add one, drop 
 
 ### Results
 
-**27 tasks × 3 runs × 2 variants on Claude Sonnet (162 runs).** Raw data, including every diff: [`data/runs-sonnet.jsonl`](data/runs-sonnet.jsonl). Full write-up: [biniyam-fekede.github.io/leantoken/writeup.html](https://biniyam-fekede.github.io/leantoken/writeup.html).
+**35 tasks (28 small, 7 multi-file), Claude Sonnet, 665 runs.** Raw data, including every diff: [`data/runs-sonnet.jsonl`](data/runs-sonnet.jsonl). Write-up: [biniyam-fekede.github.io/leantoken/writeup.html](https://biniyam-fekede.github.io/leantoken/writeup.html).
 
-| Metric (median per-task change) | Result |
+Full checklist vs. no checklist, 3 runs per task each:
+
+| Metric | Result |
 |---|---|
-| Lines changed | 0% on the median task; −50% to −83% on the 5 tasks with an obvious built-in |
-| Output tokens | +7% |
-| Cost | +5% |
-| Time | +13% |
-| Tests passed | 95% without → 96% with |
+| Total code written (sum of per-task medians) | **−16%** (286 → 239 lines) |
+| Code on the median task | 0%: most tasks don't change; the cut comes from tasks with a built-in answer |
+| Tests passed | 96% → 97% |
+| Cost per task (median change) | +5% |
+| Output tokens / time per task | +11% / +13% |
 | New packages added | 0 → 0 |
-| Decision recorded | 81 of 81 runs |
+| Decision recorded | every run |
 
-On small, clearly worded tasks, Sonnet is already fairly lean, so the checklist mostly adds a little overhead. Where a built-in exists, it cuts code sharply and can improve correctness: on `url-params`, the baseline hand-rolled a parser that failed 2 of 3 runs, while LeanToken used `URLSearchParams` and passed 3 of 3. `hash-sha256` failed on both sides because the task didn't specify sync vs. async; that's a task-wording flaw.
+**Is it the checklist or the hints?** The full ruleset names example APIs (`Intl`, `structuredClone`, …) that overlap with some tasks. With those examples removed, the result was the same: −16% total code, 99% of tests passed. The agent found the built-ins on its own.
 
-Ablation runs (one checklist step removed at a time) are next.
+**Which steps matter?** Removing one step at a time (1 run per task, so noisier):
 
-Fewer lines do not automatically mean better code. Correctness is the primary metric.
+| Version | Total code | Cost |
+|---|---|---|
+| Full checklist | −16% | +5% |
+| Full, no example APIs | −16% | +5% |
+| Short "lite" checklist (`rules/leantoken-lite.md`) | −7% | +2% |
+| Without step 3 (built-ins) | −9% | +12% |
+| Without step 6 (abstractions) | −12% | +9% |
+| Without step 1, 2, 4, 5 or 7 | −17% to −18% | +5% to +10% |
+
+Step 3 does most of the work; step 6 helps a little; the others made no measurable difference here. The lite checklist is cheaper but loses about half the effect, so wording matters more than length.
+
+**Honest caveats.** On these tasks LeanToken is a code-quality tool, not a cost saver: it costs ~5% more per task. `hash-sha256` failed in 12 of 19 runs across variants because the task didn't say sync vs. async. Two multi-file tests originally checked things the task never asked for; they were fixed and every saved diff was re-tested with `leantoken rescore` (no agent re-runs).
 
 ## Development
 

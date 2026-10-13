@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { newDependencies, parseNodeTest, parseNumstat, parseRung, type RunRecord, type Variant } from './metrics.js';
-import { LITE_RULES_PATH, rulesText, rulesVersion, rulesWithout } from './rules.js';
+import { LITE_RULES_PATH, rulesText, rulesVersion, rulesWithout, rulesWithoutExamples } from './rules.js';
 
 export const DEFAULT_TASKS_DIR = fileURLToPath(new URL('../benchmark-tasks', import.meta.url));
 
@@ -50,9 +50,10 @@ export function rulesFor(variant: Variant): string | null {
   if (variant === 'baseline') return null;
   if (variant === 'leantoken') return rulesText();
   if (variant === 'lite') return readFileSync(LITE_RULES_PATH, 'utf8');
+  if (variant === 'no-examples') return rulesWithoutExamples();
   const step = variant.match(/^no-step-([1-7])$/)?.[1];
   if (step) return rulesWithout(Number(step));
-  throw new Error(`Unknown variant "${variant}". Use baseline, leantoken, lite, or no-step-1 … no-step-7.`);
+  throw new Error(`Unknown variant "${variant}". Use baseline, leantoken, lite, no-examples, or no-step-1 … no-step-7.`);
 }
 
 /** Run one task once under one variant in a throwaway git checkout. */
@@ -109,6 +110,29 @@ export async function runTask(task: Task, variant: Variant, opts: BenchOptions):
     if (!opts.keep) rmSync(work, { recursive: true, force: true });
   }
   return record;
+}
+
+/** Re-run the hidden tests against a run's saved diff (e.g. after fixing a test). The agent is not called. */
+export async function rescore(task: Task, record: RunRecord): Promise<RunRecord> {
+  const work = mkdtempSync(join(tmpdir(), `leantoken-rescore-${task.id}-`));
+  try {
+    cpSync(join(task.dir, 'repo'), work, { recursive: true });
+    if (record.patch?.trim()) {
+      const patchFile = join(work, '.leantoken.patch');
+      writeFileSync(patchFile, record.patch.endsWith('\n') ? record.patch : record.patch + '\n');
+      const applied = await run('git', ['apply', '--whitespace=nowarn', patchFile], work);
+      rmSync(patchFile);
+      if (applied.code !== 0) throw new Error(`patch did not apply: ${applied.stderr.slice(0, 200)}`);
+    }
+    const testDir = join(work, '.leantoken-tests');
+    mkdirSync(testDir);
+    cpSync(join(task.dir, 'test'), testDir, { recursive: true });
+    const files = readdirSync(testDir).filter((f) => f.endsWith('.test.js')).map((f) => join('.leantoken-tests', f));
+    const { passed, total } = parseNodeTest((await run(process.execPath, ['--test', '--test-reporter=tap', ...files], work)).stdout);
+    return { ...record, testsPassed: passed, testsTotal: total };
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
 }
 
 /** True when a run failed because the account hit a usage or rate limit, not because of the agent. */

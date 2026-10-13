@@ -101,6 +101,19 @@ export function medianTaskChange(records: RunRecord[], a: Variant, b: Variant, m
   return median(tasks.map((t) => change(of(t, a), of(t, b))).filter(Number.isFinite));
 }
 
+/**
+ * Percent change in total code written: the sum of each task's median lines changed.
+ * Unlike the per-task median, this shows a big cut on a few tasks even when most tasks don't change.
+ */
+export function totalLinesChange(records: RunRecord[], a: Variant, b: Variant): number {
+  const tasks = [...new Set(records.map((r) => r.task))];
+  const total = (v: Variant) => tasks.reduce((sum, t) => {
+    const lines = records.filter((r) => r.task === t && r.variant === v && !r.error).map((r) => r.linesAdded + r.linesRemoved);
+    return sum + (lines.length ? median(lines) : 0);
+  }, 0);
+  return change(total(a), total(b));
+}
+
 const fmt = (n: number, digits = 0) => (Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: digits }) : '–');
 const pct = (n: number) => (Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n.toFixed(0)}%` : '–');
 

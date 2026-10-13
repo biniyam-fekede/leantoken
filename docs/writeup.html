@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LeanToken Write-up</title>
-<meta name="description" content="What happened when an AI coding agent was told to write less code, measured over 162 runs.">
+<meta name="description" content="What happened when an AI coding agent was told to write less code, measured over 665 runs.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FFD93D'/><path d='M10 8v16h13' stroke='%2314152B' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,9 +56,9 @@
 <main class="wrap">
   <article>
     <h1>I tried to stop my AI from building towers</h1>
-    <p class="dek">I gave an AI coding agent a rule to write less code. Then I measured what that actually did.</p>
+    <p class="dek">I gave an AI coding agent a checklist to write less code. Then I measured what it actually did, over 665 runs.</p>
 
-    <p>AI coding agents sometimes over-build. Ask for a date formatted nicely and you get a hand-written table of twelve month names. Ask to copy an object and you get a 20-line recursive cloning function. All of it works, but none of it was necessary.</p>
+    <p>AI coding agents sometimes over-build. Ask for a date in a nice format and you might get all twelve month names typed out by hand. Ask to copy an object and you get a 12-line recursive function. It works, but none of it was needed.</p>
     <p>LeanToken is a small plugin that gives the agent one checklist to walk through before it writes anything:</p>
     <ol>
       <li>Is this change needed at all?</li>
@@ -69,45 +69,51 @@
       <li>Does it need a new abstraction?</li>
       <li>Only then, write the smallest change that works.</li>
     </ol>
-    <p>The agent also has to say which step it stopped at, so you can see <em>why</em> it chose a solution, not just what it wrote.</p>
+    <p>The agent also says which step it stopped at, so you can see why it chose a solution.</p>
 
     <h2>How it was measured</h2>
     <ul>
-      <li><strong>27 small coding tasks</strong>, each aimed at one step of the checklist.</li>
-      <li><strong>Claude Sonnet ran each task 3 times with LeanToken and 3 times without</strong>, from identical starting code. That's 162 runs.</li>
+      <li><strong>35 coding tasks</strong>: 28 small ones and 7 that span several files.</li>
+      <li><strong>Claude Sonnet ran each task 3 times with the checklist and 3 times without</strong>, from the same starting code.</li>
       <li><strong>Hidden tests</strong> were added only after the agent finished, so it couldn't read or game them.</li>
-      <li>Every run recorded lines changed, tokens, cost, time, and new packages.</li>
+      <li>I also tried a short version of the checklist, the full one with its example APIs removed, and the full one with each step removed in turn. 665 runs in all.</li>
     </ul>
 
     <h2>What happened</h2>
-    <p><strong>On a typical task, nothing changed.</strong> The median task came out with the same amount of code either way. Modern models are already fairly lean on small, clearly worded tasks.</p>
-    <p><strong>When a built-in existed, the difference was big.</strong></p>
+    <p><strong>It wrote 16% less code in total</strong> (286 lines down to 239 across all 35 tasks), and tests passed slightly more often: 97% of runs versus 96%.</p>
+    <p><strong>Most tasks didn't change at all.</strong> Modern models are already fairly lean on clear, small tasks. The whole cut came from a handful of tasks where something built in could do the job:</p>
     <p class="caption">Lines changed, median of 3 runs</p>
     <div class="table">
       <table>
         <thead><tr><th>Task</th><th>Without</th><th>With</th><th>What it used</th></tr></thead>
         <tbody>
+          <tr><td>Plural messages in 2 languages</td><td class="n">20</td><td class="n">7</td><td><code>Intl.PluralRules</code></td></tr>
           <tr><td>Deep-copy settings</td><td class="n">12</td><td class="n">2</td><td><code>structuredClone</code></td></tr>
           <tr><td>Parse a query string</td><td class="n">10</td><td class="n">2</td><td><code>URLSearchParams</code></td></tr>
           <tr><td>Format a date</td><td class="n">7</td><td class="n">2</td><td><code>toLocaleDateString</code></td></tr>
           <tr><td>Group a list</td><td class="n">5</td><td class="n">2</td><td><code>Object.groupBy</code></td></tr>
-          <tr><td>Generate an ID</td><td class="n">4</td><td class="n">2</td><td><code>crypto.randomUUID</code></td></tr>
         </tbody>
       </table>
     </div>
-    <p><strong>Shorter code was also more correct.</strong> On the query-string task, the agent without LeanToken wrote its own parser and forgot that <code>+</code> means a space in URLs. It failed the hidden tests in 2 of 3 runs. With LeanToken it used the built-in <code>URLSearchParams</code> and passed every time. Overall, tests passed in 96% of runs with LeanToken and 95% without.</p>
-    <p><strong>Being lean wasn't free.</strong> Thinking through the checklist costs tokens. On the median task, LeanToken used 7% more output tokens, cost 5% more, and took 13% longer. On a few tasks it wrote slightly more code: the rate limiter went from 12 lines to 14.</p>
-    <p><strong>The decision log worked every time.</strong> The agent recorded which step it stopped at in 81 of 81 runs. "Built into the language" was the most common answer.</p>
+    <p><strong>Less code also meant fewer bugs.</strong> On the query-string task, the agent without the checklist wrote its own parser and forgot that <code>+</code> means a space in URLs. It failed the hidden tests in 2 of 3 runs. With the checklist it used the built-in <code>URLSearchParams</code> and passed every time.</p>
+    <p><strong>It wasn't free.</strong> Thinking through the checklist costs tokens. On a typical task it cost 5% more, about a cent, and took 13% longer.</p>
+
+    <h2>Was it the checklist, or the hints?</h2>
+    <p>The checklist gave a few examples of built-ins, like <code>structuredClone</code> and <code>Intl</code>, and some of those matched tasks in the benchmark. That could have been doing all the work. So I removed the examples and ran everything again. The result was the same: 16% less code, and 99% of tests passed. The agent found the built-ins on its own.</p>
+
+    <h2>Which steps matter?</h2>
+    <p>I removed one step at a time. Step 3, "is it built into the language?", did most of the work: without it, the code cut fell from 16% to 9%. Step 6, avoiding new abstractions, helped a little. Removing any of the other five made no real difference on these tasks.</p>
+    <p>I also tried a short version of the checklist with the same seven steps in a third of the words. It was cheaper, only 2% more per task, but it cut just 7% of the code. How the steps are worded mattered more than how long the checklist was.</p>
 
     <h2>What I got wrong</h2>
-    <p>One task asked for a SHA-256 hash, and both versions failed it the same way. The agents wrote an async function, but the hidden test expected a synchronous one, and the task never said which. That's the benchmark's fault, not the agent's.</p>
+    <p>One task asked for a SHA-256 hash, and 12 of 19 runs failed it. The task never said whether the function should be synchronous, and the agents often made it async, which is a reasonable reading. Two of the bigger tasks had tests that checked things the task never asked for. I fixed those tests and re-checked every saved result against them, without re-running the agents.</p>
 
     <div class="callout">
-      <p><strong>Takeaway.</strong> A "write less code" rule isn't a magic cost cutter for small tasks, because today's models already avoid most obvious bloat. What it does is push the agent toward built-ins at exactly the moments when hand-rolled code is both longer and buggier. The price is a few percent more tokens per task.</p>
+      <p><strong>Takeaway.</strong> A "write less code" checklist doesn't save money on small tasks. It costs a little more. What it does is steer the agent to built-ins at exactly the moments when hand-written code is longer and buggier. One step does most of that work.</p>
     </div>
 
     <h2>What's next</h2>
-    <p>Removing one checklist step at a time to see which ones actually matter, and trying bigger, messier tasks where the towers should get taller.</p>
+    <p>Trim the checklist to the steps that matter while keeping the wording that works, and test it on real projects instead of small tasks.</p>
     <p>Everything is open source, including the raw results: <a href="https://github.com/biniyam-fekede/leantoken">github.com/biniyam-fekede/leantoken</a>.</p>
   </article>
 </main>

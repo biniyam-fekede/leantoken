@@ -61,6 +61,14 @@ describe('formatReport', () => {
   });
 });
 
+describe('totalLinesChange', () => {
+  it('sums per-task medians so a few big cuts show up', async () => {
+    const { totalLinesChange } = await import('../src/metrics.js');
+    const r = (task: string, variant: string, lines: number) => ({ task, variant, linesAdded: lines, linesRemoved: 0 }) as RunRecord;
+    expect(totalLinesChange([r('a', 'baseline', 10), r('a', 'x', 2), r('b', 'baseline', 10), r('b', 'x', 10)], 'baseline', 'x')).toBe(-40);
+  });
+});
+
 describe('medianTaskChange', () => {
   const r = (task: string, variant: string, lines: number): RunRecord => ({
     task, variant, model: 'm', rulesVersion: '1', timestamp: '', durationMs: 1000, inputTokens: 0, outputTokens: 10,

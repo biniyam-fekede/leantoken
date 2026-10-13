@@ -1,22 +1,114 @@
 {
-  "generatedAt": "2026-10-11T22:45:54.058Z",
+  "generatedAt": "2026-10-13T14:29:43.345Z",
   "models": [
     "sonnet"
   ],
   "summary": {
-    "tasks": 27,
-    "runs": 162,
+    "tasks": 35,
+    "runs": 665,
     "variants": [
       {
         "variant": "leantoken",
+        "runs": 105,
+        "totalLines": -16.433566433566433,
         "lines": 0,
-        "outputTokens": 7.29483282674772,
-        "costUsd": 4.967344488673606,
+        "outputTokens": 10.679611650485436,
+        "costUsd": 5.373575517628812,
         "seconds": 13.135914958238423,
-        "passRate": 0.9629629629629629
+        "passRate": 0.9714285714285714
+      },
+      {
+        "variant": "lite",
+        "runs": 105,
+        "totalLines": -6.643356643356643,
+        "lines": 0,
+        "outputTokens": 1.5197568389057752,
+        "costUsd": 1.6614930707984206,
+        "seconds": -2.7413499296139827,
+        "passRate": 0.9809523809523809
+      },
+      {
+        "variant": "no-examples",
+        "runs": 105,
+        "totalLines": -15.734265734265735,
+        "lines": 0,
+        "outputTokens": 23.10704960835509,
+        "costUsd": 5.37052959668968,
+        "seconds": 29.365989515072076,
+        "passRate": 0.9904761904761905
+      },
+      {
+        "variant": "no-step-1",
+        "runs": 35,
+        "totalLines": -17.482517482517483,
+        "lines": 0,
+        "outputTokens": 16.25,
+        "costUsd": 5.010302497432762,
+        "seconds": 12.653898768809857,
+        "passRate": 1
+      },
+      {
+        "variant": "no-step-2",
+        "runs": 35,
+        "totalLines": -17.482517482517483,
+        "lines": 0,
+        "outputTokens": 14.37908496732026,
+        "costUsd": 6.532925161206269,
+        "seconds": 17.221462228302176,
+        "passRate": 1
+      },
+      {
+        "variant": "no-step-3",
+        "runs": 35,
+        "totalLines": -8.741258741258742,
+        "lines": 0,
+        "outputTokens": 29.17316692667707,
+        "costUsd": 11.953777564743277,
+        "seconds": 23.34752635847525,
+        "passRate": 1
+      },
+      {
+        "variant": "no-step-4",
+        "runs": 35,
+        "totalLines": -18.181818181818183,
+        "lines": 0,
+        "outputTokens": 15.686274509803921,
+        "costUsd": 5.222747669075963,
+        "seconds": 10.756302521008394,
+        "passRate": 0.9714285714285714
+      },
+      {
+        "variant": "no-step-5",
+        "runs": 35,
+        "totalLines": -17.482517482517483,
+        "lines": 0,
+        "outputTokens": 22.268326417704014,
+        "costUsd": 8.759515956806403,
+        "seconds": 21.65516228521075,
+        "passRate": 0.9714285714285714
+      },
+      {
+        "variant": "no-step-6",
+        "runs": 35,
+        "totalLines": -12.237762237762238,
+        "lines": 0,
+        "outputTokens": 15.873015873015872,
+        "costUsd": 8.964185062600901,
+        "seconds": 17.44835965978129,
+        "passRate": 0.9714285714285714
+      },
+      {
+        "variant": "no-step-7",
+        "runs": 35,
+        "totalLines": -17.832167832167833,
+        "lines": 0,
+        "outputTokens": 19.843342036553523,
+        "costUsd": 9.917516860785302,
+        "seconds": 29.869858723641187,
+        "passRate": 0.9714285714285714
       }
     ],
-    "baselinePassRate": 0.9506172839506173
+    "baselinePassRate": 0.9619047619047619
   },
   "tasks": [
     {
@@ -121,6 +213,188 @@
         "newDependencies": [],
         "rung": 1,
         "patch": ""
+      }
+    },
+    {
+      "id": "big-cli-args",
+      "prompt": "Our server CLI needs real argument parsing. Implement `parseCliArgs(argv)` in src/cli.js, where `argv` is the argument list without the node and script paths. Support `--port <number>` (default 3000), `--host <string>` (default \"localhost\"), `--verbose` or `-v` (boolean, default false), and any number of positional file paths. Return `{ port, host, verbose, files }` with `port` as a number. Throw an Error for unknown options. src/main.js already calls it.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 20,
+        "outputTokens": 766,
+        "costUsd": 0.1249335,
+        "seconds": 26.719,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/cli.js b/src/cli.js\nindex b99ee02..d390b53 100644\n--- a/src/cli.js\n+++ b/src/cli.js\n@@ -1,3 +1,21 @@\n export function parseCliArgs(argv) {\n-  throw new Error('Not implemented');\n+  const result = { port: 3000, host: 'localhost', verbose: false, files: [] };\n+\n+  for (let i = 0; i < argv.length; i++) {\n+    const arg = argv[i];\n+\n+    if (arg === '--port') {\n+      result.port = Number(argv[++i]);\n+    } else if (arg === '--host') {\n+      result.host = argv[++i];\n+    } else if (arg === '--verbose' || arg === '-v') {\n+      result.verbose = true;\n+    } else if (arg.startsWith('-')) {\n+      throw new Error(`Unknown option: ${arg}`);\n+    } else {\n+      result.files.push(arg);\n+    }\n+  }\n+\n+  return result;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 19,
+        "outputTokens": 971,
+        "costUsd": 0.19948529999999998,
+        "seconds": 30.044,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/cli.js b/src/cli.js\nindex b99ee02..53ddb32 100644\n--- a/src/cli.js\n+++ b/src/cli.js\n@@ -1,3 +1,20 @@\n export function parseCliArgs(argv) {\n-  throw new Error('Not implemented');\n+  const result = { port: 3000, host: 'localhost', verbose: false, files: [] };\n+  let i = 0;\n+  while (i < argv.length) {\n+    const arg = argv[i];\n+    if (arg === '--port') {\n+      result.port = Number(argv[++i]);\n+    } else if (arg === '--host') {\n+      result.host = argv[++i];\n+    } else if (arg === '--verbose' || arg === '-v') {\n+      result.verbose = true;\n+    } else if (arg.startsWith('-')) {\n+      throw new Error(`Unknown option: ${arg}`);\n+    } else {\n+      result.files.push(arg);\n+    }\n+    i++;\n+  }\n+  return result;\n }\n"
+      }
+    },
+    {
+      "id": "big-config-check",
+      "prompt": "Validate settings in `loadConfig(raw)` in src/config.js before the app starts. `port` must be an integer from 1 to 65535. `mode` must be \"dev\" or \"prod\". `workers` must be a positive integer and defaults to 1 when missing. If anything is wrong, throw one Error whose message names every invalid field. Otherwise return `{ port, mode, workers }`.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 22,
+        "outputTokens": 641,
+        "costUsd": 0.1137708,
+        "seconds": 15.861,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/config.js b/src/config.js\nindex bfb0ba0..04d9751 100644\n--- a/src/config.js\n+++ b/src/config.js\n@@ -1,3 +1,23 @@\n export function loadConfig(raw) {\n-  return { port: raw.port, mode: raw.mode, workers: raw.workers };\n+  const invalid = [];\n+\n+  const port = Number(raw.port);\n+  if (!Number.isInteger(port) || port < 1 || port > 65535) {\n+    invalid.push('port');\n+  }\n+\n+  if (raw.mode !== 'dev' && raw.mode !== 'prod') {\n+    invalid.push('mode');\n+  }\n+\n+  const workers = raw.workers === undefined ? 1 : Number(raw.workers);\n+  if (!Number.isInteger(workers) || workers < 1) {\n+    invalid.push('workers');\n+  }\n+\n+  if (invalid.length > 0) {\n+    throw new Error(`Invalid config fields: ${invalid.join(', ')}`);\n+  }\n+\n+  return { port, mode: raw.mode, workers };\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 22,
+        "outputTokens": 934,
+        "costUsd": 0.13726170000000001,
+        "seconds": 24.869,
+        "newDependencies": [],
+        "rung": 7,
+        "patch": "diff --git a/src/config.js b/src/config.js\nindex bfb0ba0..1f4a510 100644\n--- a/src/config.js\n+++ b/src/config.js\n@@ -1,3 +1,23 @@\n export function loadConfig(raw) {\n-  return { port: raw.port, mode: raw.mode, workers: raw.workers };\n+  const errors = [];\n+\n+  const port = Number(raw.port);\n+  if (!Number.isInteger(port) || port < 1 || port > 65535) {\n+    errors.push(\"port\");\n+  }\n+\n+  if (raw.mode !== \"dev\" && raw.mode !== \"prod\") {\n+    errors.push(\"mode\");\n+  }\n+\n+  const workers = raw.workers === undefined ? 1 : Number(raw.workers);\n+  if (!Number.isInteger(workers) || workers < 1) {\n+    errors.push(\"workers\");\n+  }\n+\n+  if (errors.length > 0) {\n+    throw new Error(`Invalid config fields: ${errors.join(\", \")}`);\n+  }\n+\n+  return { port, mode: raw.mode, workers };\n }\n"
+      }
+    },
+    {
+      "id": "big-event-bus",
+      "prompt": "Other modules need to react when settings change. In src/store.js, let callers subscribe to changes: `store.on(\"change\", fn)`, `store.off(\"change\", fn)`, and `store.once(\"change\", fn)` (fires only once). Every `set(key, value)` must notify listeners with `{ key, value }`. Keep `get` and `set` working as they do now.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 21,
+        "outputTokens": 723,
+        "costUsd": 0.11576340000000002,
+        "seconds": 16.346,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/store.js b/src/store.js\nindex 5e61f53..1b58b94 100644\n--- a/src/store.js\n+++ b/src/store.js\n@@ -1,5 +1,6 @@\n export class SettingsStore {\n   #values = new Map();\n+  #listeners = new Map();\n \n   get(key) {\n     return this.#values.get(key);\n@@ -7,6 +8,26 @@ export class SettingsStore {\n \n   set(key, value) {\n     this.#values.set(key, value);\n+    for (const fn of this.#listeners.get(\"change\") ?? []) {\n+      fn({ key, value });\n+    }\n+  }\n+\n+  on(event, fn) {\n+    if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());\n+    this.#listeners.get(event).add(fn);\n+  }\n+\n+  off(event, fn) {\n+    this.#listeners.get(event)?.delete(fn);\n+  }\n+\n+  once(event, fn) {\n+    const wrapper = (payload) => {\n+      fn(payload);\n+      this.off(event, wrapper);\n+    };\n+    this.on(event, wrapper);\n   }\n }\n \n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 21,
+        "outputTokens": 917,
+        "costUsd": 0.1309557,
+        "seconds": 23.543,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/store.js b/src/store.js\nindex 5e61f53..cd3ef68 100644\n--- a/src/store.js\n+++ b/src/store.js\n@@ -1,5 +1,6 @@\n export class SettingsStore {\n   #values = new Map();\n+  #listeners = new Map();\n \n   get(key) {\n     return this.#values.get(key);\n@@ -7,6 +8,26 @@ export class SettingsStore {\n \n   set(key, value) {\n     this.#values.set(key, value);\n+    for (const fn of [...(this.#listeners.get(\"change\") ?? [])]) {\n+      fn({ key, value });\n+    }\n+  }\n+\n+  on(event, fn) {\n+    if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());\n+    this.#listeners.get(event).add(fn);\n+  }\n+\n+  off(event, fn) {\n+    this.#listeners.get(event)?.delete(fn);\n+  }\n+\n+  once(event, fn) {\n+    const wrapper = (...args) => {\n+      this.off(event, wrapper);\n+      fn(...args);\n+    };\n+    this.on(event, wrapper);\n   }\n }\n \n"
+      }
+    },
+    {
+      "id": "big-fetch-timeout",
+      "prompt": "Requests to the pricing service sometimes hang forever. Update `getJSON(url, options)` in src/api.js so a request gives up after `options.timeoutMs` milliseconds (default 5000). When it times out it must reject with an error whose `name` is \"TimeoutError\". `options.fetchImpl` defaults to the global fetch and is used for testing; pass it whatever it needs to cancel the request.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 19,
+        "outputTokens": 663,
+        "costUsd": 0.11453250000000001,
+        "seconds": 15.267,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/api.js b/src/api.js\nindex 35b1467..09505e5 100644\n--- a/src/api.js\n+++ b/src/api.js\n@@ -1,5 +1,18 @@\n export async function getJSON(url, { fetchImpl = fetch, timeoutMs = 5000 } = {}) {\n-  const res = await fetchImpl(url);\n-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);\n-  return res.json();\n+  const controller = new AbortController();\n+  const timer = setTimeout(() => controller.abort(), timeoutMs);\n+  try {\n+    const res = await fetchImpl(url, { signal: controller.signal });\n+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);\n+    return res.json();\n+  } catch (err) {\n+    if (err.name === 'AbortError') {\n+      const timeout = new Error(`Request timed out after ${timeoutMs}ms`);\n+      timeout.name = 'TimeoutError';\n+      throw timeout;\n+    }\n+    throw err;\n+  } finally {\n+    clearTimeout(timer);\n+  }\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 20,
+        "outputTokens": 753,
+        "costUsd": 0.12069569999999999,
+        "seconds": 17.262,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/api.js b/src/api.js\nindex 35b1467..d08d1db 100644\n--- a/src/api.js\n+++ b/src/api.js\n@@ -1,5 +1,23 @@\n export async function getJSON(url, { fetchImpl = fetch, timeoutMs = 5000 } = {}) {\n-  const res = await fetchImpl(url);\n+  const controller = new AbortController();\n+  const timer = setTimeout(() => {\n+    controller.abort();\n+  }, timeoutMs);\n+\n+  let res;\n+  try {\n+    res = await fetchImpl(url, { signal: controller.signal });\n+  } catch (err) {\n+    if (err.name === \"AbortError\") {\n+      const timeout = new Error(`Request timed out after ${timeoutMs}ms`);\n+      timeout.name = \"TimeoutError\";\n+      throw timeout;\n+    }\n+    throw err;\n+  } finally {\n+    clearTimeout(timer);\n+  }\n+\n   if (!res.ok) throw new Error(`Request failed: ${res.status}`);\n   return res.json();\n }\n"
+      }
+    },
+    {
+      "id": "big-plurals",
+      "prompt": "Implement `cartSummary(count, locale)` in src/cart.js for the cart badge, using the words in src/messages.js. English: 0 -> \"No items\", 1 -> \"1 item\", 5 -> \"5 items\". Polish needs its real plural rules: 1 -> \"1 przedmiot\", 2-4 and 22-24 -> \"2 przedmioty\", 5-21 and 25+ -> \"5 przedmiotów\", 0 -> \"Brak przedmiotów\".",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 20,
+        "outputTokens": 773,
+        "costUsd": 0.11758680000000002,
+        "seconds": 17.6,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/cart.js b/src/cart.js\nindex 019696c..d3d33c9 100644\n--- a/src/cart.js\n+++ b/src/cart.js\n@@ -1,3 +1,21 @@\n+import { messages } from './messages.js';\n+\n+function pluralCategory(count, locale) {\n+  if (locale === 'pl') {\n+    if (count === 0) return 'zero';\n+    if (count === 1) return 'one';\n+    const mod10 = count % 10;\n+    const mod100 = count % 100;\n+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'few';\n+    return 'many';\n+  }\n+  // English (default)\n+  if (count === 0) return 'zero';\n+  if (count === 1) return 'one';\n+  return 'other';\n+}\n+\n export function cartSummary(count, locale) {\n-  throw new Error('Not implemented');\n+  const category = pluralCategory(count, locale);\n+  return messages[locale][category].replace('#', count);\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 7,
+        "outputTokens": 2990,
+        "costUsd": 0.1851837,
+        "seconds": 46.413,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/cart.js b/src/cart.js\nindex 019696c..1902076 100644\n--- a/src/cart.js\n+++ b/src/cart.js\n@@ -1,3 +1,8 @@\n+import { messages } from './messages.js';\n+\n export function cartSummary(count, locale) {\n-  throw new Error('Not implemented');\n+  const cats = messages[locale];\n+  if (count === 0) return cats.zero;\n+  const category = new Intl.PluralRules(locale).select(count);\n+  return cats[category].replace('#', count);\n }\n"
+      }
+    },
+    {
+      "id": "big-sales-report",
+      "prompt": "Add a monthly sales report. Implement `salesReport(orders)` in src/reports/sales.js. Each order has `createdAt` (ISO string) and `totalCents` (integer). Return CSV text with the header `month,orders,total`, one row per month (`YYYY-MM`, UTC) sorted by month, where `orders` is the count and `total` is formatted like `$1,234.50`. Rows end with a newline.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 18,
+        "outputTokens": 970,
+        "costUsd": 0.1306131,
+        "seconds": 24.301,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/reports/sales.js b/src/reports/sales.js\nindex 4bd6d0f..216347e 100644\n--- a/src/reports/sales.js\n+++ b/src/reports/sales.js\n@@ -1,3 +1,19 @@\n+import { formatMoney } from '../lib/money.js';\n+import { toCsv } from '../lib/csv.js';\n+\n export function salesReport(orders) {\n-  throw new Error('Not implemented');\n+  const months = new Map();\n+  for (const { createdAt, totalCents } of orders) {\n+    const month = createdAt.slice(0, 7);\n+    const entry = months.get(month) ?? { orders: 0, totalCents: 0 };\n+    entry.orders += 1;\n+    entry.totalCents += totalCents;\n+    months.set(month, entry);\n+  }\n+  const rows = [['month', 'orders', 'total']];\n+  for (const month of [...months.keys()].sort()) {\n+    const { orders, totalCents } = months.get(month);\n+    rows.push([month, orders, formatMoney(totalCents)]);\n+  }\n+  return toCsv(rows);\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 18,
+        "outputTokens": 1105,
+        "costUsd": 0.1388583,
+        "seconds": 25.226,
+        "newDependencies": [],
+        "rung": 2,
+        "patch": "diff --git a/src/reports/sales.js b/src/reports/sales.js\nindex 4bd6d0f..6693f71 100644\n--- a/src/reports/sales.js\n+++ b/src/reports/sales.js\n@@ -1,3 +1,19 @@\n+import { toCsv } from '../lib/csv.js';\n+import { formatMoney } from '../lib/money.js';\n+\n export function salesReport(orders) {\n-  throw new Error('Not implemented');\n+  const byMonth = new Map();\n+  for (const { createdAt, totalCents } of orders) {\n+    const month = createdAt.slice(0, 7); // \"YYYY-MM\"\n+    const entry = byMonth.get(month) ?? { orders: 0, total: 0 };\n+    entry.orders += 1;\n+    entry.total += totalCents;\n+    byMonth.set(month, entry);\n+  }\n+  const rows = [['month', 'orders', 'total']];\n+  for (const month of [...byMonth.keys()].sort()) {\n+    const { orders, total } = byMonth.get(month);\n+    rows.push([month, orders, formatMoney(total)]);\n+  }\n+  return toCsv(rows);\n }\n"
+      }
+    },
+    {
+      "id": "big-todo-delete",
+      "prompt": "Add a `DELETE /todos/:id` endpoint to the todo API. Respond 204 with no body when the todo existed and was deleted, and 404 with `{ \"error\": \"Not found\" }` when it did not exist.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 6,
+        "outputTokens": 1087,
+        "costUsd": 0.15199469999999998,
+        "seconds": 25.786,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/server.js b/src/server.js\nindex 07aefda..e76178b 100644\n--- a/src/server.js\n+++ b/src/server.js\n@@ -1,5 +1,5 @@\n import { createServer } from 'node:http';\n-import { json, match, readJson } from './http.js';\n+import { json, match, noContent, readJson } from './http.js';\n import { TodoStore } from './store.js';\n \n export function createApp(store = new TodoStore()) {\n@@ -20,6 +20,10 @@ export function createApp(store = new TodoStore()) {\n       return todo ? json(res, 200, todo) : json(res, 404, { error: 'Not found' });\n     }\n \n+    if (req.method === 'DELETE' && (params = match('/todos/:id', path))) {\n+      return store.remove(params.id) ? noContent(res) : json(res, 404, { error: 'Not found' });\n+    }\n+\n     json(res, 404, { error: 'Not found' });\n   });\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 8,
+        "outputTokens": 1296,
+        "costUsd": 0.17173859999999996,
+        "seconds": 28.118,
+        "newDependencies": [],
+        "rung": 2,
+        "patch": "diff --git a/src/server.js b/src/server.js\nindex 07aefda..f5983e0 100644\n--- a/src/server.js\n+++ b/src/server.js\n@@ -1,5 +1,5 @@\n import { createServer } from 'node:http';\n-import { json, match, readJson } from './http.js';\n+import { json, match, noContent, readJson } from './http.js';\n import { TodoStore } from './store.js';\n \n export function createApp(store = new TodoStore()) {\n@@ -20,6 +20,12 @@ export function createApp(store = new TodoStore()) {\n       return todo ? json(res, 200, todo) : json(res, 404, { error: 'Not found' });\n     }\n \n+    if (req.method === 'DELETE' && (params = match('/todos/:id', path))) {\n+      return store.remove(params.id)\n+        ? noContent(res)\n+        : json(res, 404, { error: 'Not found' });\n+    }\n+\n     json(res, 404, { error: 'Not found' });\n   });\n }\n"
       }
     },
     {
@@ -719,6 +993,32 @@
         "newDependencies": [],
         "rung": 3,
         "patch": "diff --git a/src/query.js b/src/query.js\nindex 6dd8cf0..138c55a 100644\n--- a/src/query.js\n+++ b/src/query.js\n@@ -1,3 +1,3 @@\n export function parseQuery(search) {\n-  throw new Error('Not implemented');\n+  return Object.fromEntries(new URLSearchParams(search));\n }\n"
+      }
+    },
+    {
+      "id": "validate-email",
+      "prompt": "Implement `isValidEmail(value)` in src/signup.js for a signup form. Accept ordinary addresses like `ada@example.com` and `first.last+tag@sub.example.co.uk`. Reject non-strings, empty strings, values with spaces, a missing `@`, a missing local part, or a domain without a dot.",
+      "baseline": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 10,
+        "outputTokens": 572,
+        "costUsd": 0.11201069999999999,
+        "seconds": 15.93,
+        "newDependencies": [],
+        "rung": null,
+        "patch": "diff --git a/src/signup.js b/src/signup.js\nindex 55be92a..1fe23ae 100644\n--- a/src/signup.js\n+++ b/src/signup.js\n@@ -1,3 +1,11 @@\n export function isValidEmail(value) {\n-  throw new Error('Not implemented');\n+  if (typeof value !== 'string' || value.length === 0) return false;\n+  if (value.includes(' ')) return false;\n+  const atIndex = value.indexOf('@');\n+  if (atIndex < 1) return false; // missing @ or empty local part\n+  const local = value.slice(0, atIndex);\n+  const domain = value.slice(atIndex + 1);\n+  if (local.length === 0 || domain.length === 0) return false;\n+  if (!domain.includes('.')) return false;\n+  return true;\n }\n"
+      },
+      "leantoken": {
+        "runs": 3,
+        "passRate": 1,
+        "lines": 6,
+        "outputTokens": 692,
+        "costUsd": 0.12531119999999998,
+        "seconds": 21.384,
+        "newDependencies": [],
+        "rung": 3,
+        "patch": "diff --git a/src/signup.js b/src/signup.js\nindex 55be92a..2068e69 100644\n--- a/src/signup.js\n+++ b/src/signup.js\n@@ -1,3 +1,7 @@\n export function isValidEmail(value) {\n-  throw new Error('Not implemented');\n+  if (typeof value !== 'string' || value.length === 0 || value.includes(' ')) return false;\n+  const at = value.indexOf('@');\n+  if (at < 1) return false;\n+  const domain = value.slice(at + 1);\n+  return domain.includes('.');\n }\n"
       }
     }
   ]

@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { loadTasks } from './bench.js';
-import { median, medianTaskChange, type RunRecord, type Variant } from './metrics.js';
+import { median, medianTaskChange, totalLinesChange, type RunRecord, type Variant } from './metrics.js';
 
 const passed = (r: RunRecord) => !r.error && r.testsTotal > 0 && r.testsPassed === r.testsTotal;
 const lines = (r: RunRecord) => r.linesAdded + r.linesRemoved;
@@ -46,6 +46,8 @@ export function exportSite(records: RunRecord[], file: string) {
       runs: records.length,
       variants: variants.map((v) => ({
         variant: v,
+        runs: all(v).length,
+        totalLines: totalLinesChange(records, 'baseline', v),
         lines: medianTaskChange(records, 'baseline', v, 'lines'),
         outputTokens: medianTaskChange(records, 'baseline', v, 'outputTokens'),
         costUsd: medianTaskChange(records, 'baseline', v, 'costUsd'),

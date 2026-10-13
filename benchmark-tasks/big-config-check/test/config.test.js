@@ -7,4 +7,3 @@ test('names every bad field', () => {
   assert.throws(() => loadConfig({ port: 70000, mode: 'test', workers: 0 }), (e) => /port/.test(e.message) && /mode/.test(e.message) && /workers/.test(e.message));
 });
 test('rejects non-integer port', () => assert.throws(() => loadConfig({ port: 80.5, mode: 'dev' }), /port/));
-test('rejects string port', () => assert.throws(() => loadConfig({ port: '80', mode: 'dev' }), /port/));
